@@ -51,7 +51,7 @@ else:
     app.config['MYSQL_USER'] = 'if0_36875011'
     app.config['MYSQL_PASSWORD'] = 'Jules-0019'
     app.config['MYSQL_DB'] = 'if0_36875011_isent'
-    app.config['MYSQL_PORT'] = 21
+    app.config['MYSQL_PORT'] = 3306
     #old-db
     #app.config['MYSQL_HOST'] = 'mysql-76692-0.cloudclusters.net';
     #app.config['MYSQL_USER'] = 'dbuser';
