@@ -47,11 +47,11 @@ if platform.system() == "Windows":
     app.config['MYSQL_DB'] = 'isent'
 # in deployment
 else:
-    app.config['MYSQL_HOST'] = 'mysql-77857-0.cloudclusters.net'
-    app.config['MYSQL_USER'] = 'dbuser'
-    app.config['MYSQL_PASSWORD'] = 'dbuser123'
-    app.config['MYSQL_DB'] = 'isent'
-    app.config['MYSQL_PORT'] = 12998
+    app.config['MYSQL_HOST'] = 'sql203.infinityfree.com'
+    app.config['MYSQL_USER'] = 'if0_36875011'
+    app.config['MYSQL_PASSWORD'] = 'Jules-0019'
+    app.config['MYSQL_DB'] = 'if0_36875011_isent'
+    app.config['MYSQL_PORT'] = 21
     #old-db
     #app.config['MYSQL_HOST'] = 'mysql-76692-0.cloudclusters.net';
     #app.config['MYSQL_USER'] = 'dbuser';
