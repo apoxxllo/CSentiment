@@ -320,7 +320,7 @@ def dashboard():
                 questionnairesets = [0, 0]
             questionnairesets = tuple(questionnairesets)
 
-        sql = "SELECT * FROM evaluationForms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
         cur.execute(sql, (questionnairesets, semester, school_year))
         evaluationsAll = cur.fetchall()
         evaluations = []
@@ -355,7 +355,7 @@ def dashboard():
                 questionnairesets = (0, 0)
             print(type(questionnairesets))
             print(semester, school_year)
-            sql = "SELECT * FROM evaluationForms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
+            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
             cur.execute(sql, (questionnairesets, semester, school_year))
             evaluationsAll = cur.fetchall()
             evaluations = []
@@ -392,7 +392,7 @@ def dashboard():
             if len(questionnairesets) == 0:
                 questionnairesets = (0, 0)
             print(type(questionnairesets))
-            sql = "SELECT * FROM evaluationForms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
+            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
             cur.execute(sql, (questionnairesets, semester, school_year))
             evaluationsAll = cur.fetchall()
             evaluations = []
@@ -436,7 +436,7 @@ def viewEvaluationStatistics(evaluationFormId):
         return redirect(url_for('dashboard'))
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM evaluationForms WHERE id = %s", (evaluationFormId,))
+    cur.execute("SELECT * FROM evaluationforms WHERE id = %s", (evaluationFormId,))
     evaluationForm = cur.fetchone()
 
     evaluationName = evaluationForm[1]
@@ -1260,7 +1260,7 @@ def editEvaluation(evaluationFormId):
         questionnaireset_ids = [0,0]
         questionnaireset_ids = tuple(questionnaireset_ids)
 
-    cur.execute("SELECT * FROM evaluationForms WHERE id = %s and questionnaireset_id in %s", (evaluationFormId, questionnaireset_ids))
+    cur.execute("SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id in %s", (evaluationFormId, questionnaireset_ids))
     evaluationForm = cur.fetchone()
     if not evaluationForm:
         flash('Invalid evaluation form ID', 'danger')
@@ -1292,7 +1292,7 @@ def editEvaluation(evaluationFormId):
         #     return redirect(url_for('editEvaluation', evaluationFormId=evaluationFormId))
 
         cur.execute("""
-        UPDATE evaluationForms SET title = %s, dateStart = %s, dateEnd = %s, questionnaireset_id = %s,
+        UPDATE evaluationforms SET title = %s, dateStart = %s, dateEnd = %s, questionnaireset_id = %s,
         semester_id = %s, schoolyear_id = %s, rating_id = %s WHERE id = %s    
         """, (title, date_start, date_end, questionnaireset_id, semester_id, schoolyear_id, rating_id, evaluationFormId ))
 
@@ -1331,9 +1331,9 @@ def createEvaluationForm():
         flash('End date cannot be less than today.', 'danger')
         return redirect(url_for('addEvaluation'))
 
-    # Insert into evaluationForms table
+    # Insert into evaluationforms table
     cur.execute("""
-        INSERT INTO evaluationForms (title, dateStart, dateEnd, questionnaireset_id, semester_id, schoolyear_id, rating_id)
+        INSERT INTO evaluationforms (title, dateStart, dateEnd, questionnaireset_id, semester_id, schoolyear_id, rating_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
     """, (title, date_start, date_end, questionnaireset_id, semester_id, schoolyear_id, rating_id))
 
@@ -1361,7 +1361,7 @@ def viewEvaluation(evaluationFormId, subject, respondents):
         questionnairesets = [0, 0]
     questionnairesets = tuple(questionnairesets)
 
-    sql = "SELECT * FROM evaluationForms WHERE id = %s and questionnaireset_id IN %s"
+    sql = "SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id IN %s"
     val = (evaluationFormId, questionnairesets,)
     cur.execute(sql, val)
     evaluation_forms = cur.fetchone()
@@ -1521,7 +1521,7 @@ def evaluate(teacher, subject, evaluationFormId, category): #summary
         questionnairesets = [0, 0]
     questionnairesets = tuple(questionnairesets)
 
-    sql = "SELECT * FROM evaluationForms WHERE id = %s and questionnaireset_id IN %s"
+    sql = "SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id IN %s"
     val = (evaluationFormId,questionnairesets,)
     cur.execute(sql, val)
     evaluation_forms = cur.fetchone()
@@ -1724,7 +1724,7 @@ def evaluation(teacher, subject, evaluationFormId):
         questionnairesets = [0, 0]
     questionnairesets = tuple(questionnairesets)
 
-    sql = "SELECT * FROM evaluationForms WHERE dateEnd >= CURDATE() and id = %s and questionnaireset_id IN %s"
+    sql = "SELECT * FROM evaluationforms WHERE dateEnd >= CURDATE() and id = %s and questionnaireset_id IN %s"
     val = (evaluationFormId,questionnairesets,)
     cur.execute(sql, val)
     evaluation_forms = cur.fetchone()
@@ -1755,7 +1755,7 @@ def evaluation(teacher, subject, evaluationFormId):
     # evaluated = cur.fetchall()
 
     if roleId == 1:
-        sql = "SELECT * FROM evaluationForms WHERE id = %s and dateEnd > CURDATE() and questionnaireset_id IN %s"
+        sql = "SELECT * FROM evaluationforms WHERE id = %s and dateEnd > CURDATE() and questionnaireset_id IN %s"
         val = (evaluationFormId, questionnairesets,)
         cur.execute(sql, val)
         evaluationWithDate = cur.fetchone()
@@ -2071,7 +2071,7 @@ def evaluation(teacher, subject, evaluationFormId):
             mysql.connection.commit()
             # cur.close()
 
-            sql = "SELECT * FROM evaluationForms WHERE id = %s"
+            sql = "SELECT * FROM evaluationforms WHERE id = %s"
             val = (evaluationFormId,)
             cur.execute(sql, val)
             evaluation_forms = cur.fetchone()
@@ -2327,7 +2327,7 @@ def generateReport(sec1, sec2, sec3, sec4, sec5, comment, ratingPerc, commentPer
         if len(questionnairesets) == 0:
             questionnairesets = [0, 0]
         questionnairesets = tuple(questionnairesets)
-        cur.execute("SELECT * FROM evaluationForms WHERE id = %s and questionnaireset_id in %s", (evaluationFormId, questionnairesets))
+        cur.execute("SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id in %s", (evaluationFormId, questionnairesets))
         evaluationForm = cur.fetchone()
 
         if not evaluationForm:
@@ -2641,12 +2641,12 @@ def advancedEvaluationStatistics():
     # Data for online vs face-to-face classes chart
     cur.execute("SELECT id FROM questionnaireset WHERE modality = 'ONLINE'")
     onlineIds = cur.fetchall()
-    cur.execute("SELECT count(*) FROM evaluationForms WHERE questionnaireset_id in %s", (onlineIds,))
+    cur.execute("SELECT count(*) FROM evaluationforms WHERE questionnaireset_id in %s", (onlineIds,))
     onlineCount = cur.fetchone()[0]
 
     cur.execute("SELECT id FROM questionnaireset WHERE modality = 'FTF'")
     ftfIds = cur.fetchall()
-    cur.execute("SELECT count(*) FROM evaluationForms WHERE questionnaireset_id in %s", (ftfIds,))
+    cur.execute("SELECT count(*) FROM evaluationforms WHERE questionnaireset_id in %s", (ftfIds,))
     ftfCount = cur.fetchone()[0]
 
     online_ftf_data = [onlineCount, ftfCount]  # Example: Number of online, Number of face-to-face
@@ -2659,14 +2659,14 @@ def advancedEvaluationStatistics():
     ]
     cur.execute("SELECT id FROM questionnaireset WHERE modality = 'ONLINE'")
     online_ids = cur.fetchall()
-    cur.execute("SELECT id FROM evaluationForms WHERE questionnaireset_id in %s", (online_ids,))
+    cur.execute("SELECT id FROM evaluationforms WHERE questionnaireset_id in %s", (online_ids,))
     online_evaluation_forms = cur.fetchall()
     cur.execute("SELECT avg(score) FROM evaluation WHERE evaluationForm_id in %s", (online_evaluation_forms,))
     online_sentiment_proportions = cur.fetchone()[0]
 
     cur.execute("SELECT id FROM questionnaireset WHERE modality = 'FTF'")
     ftf_ids = cur.fetchall()
-    cur.execute("SELECT id FROM evaluationForms WHERE questionnaireset_id in %s", (ftf_ids,))
+    cur.execute("SELECT id FROM evaluationforms WHERE questionnaireset_id in %s", (ftf_ids,))
     ftf_evaluation_forms = cur.fetchall()
     cur.execute("SELECT avg(score) FROM evaluation WHERE evaluationForm_id in %s", (ftf_evaluation_forms,))
     ftf_sentiment_proportions = cur.fetchone()[0]
@@ -3445,7 +3445,7 @@ with app.app_context():
         import requests
         evaluationFormId = G_EVALUATION_FORM_ID
         cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM evaluationForms WHERE id = %s", (evaluationFormId,))
+        cur.execute("SELECT * FROM evaluationforms WHERE id = %s", (evaluationFormId,))
         evaluationForm = cur.fetchone()
 
         ratingId = evaluationForm[7]
