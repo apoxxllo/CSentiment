@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}View Rating Systems{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <br>
+    <h1 class="text-center">Title: {{rating[1]}}</h1>
+    <div class="card">
+        <div class="card-header bg-primary text-white text-center">
+            <h2>LEGEND</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Range</th>
+                        <th>Interpretation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{rating[10]}}</td>
+                        <td>{{rating[11]}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{rating[8]}}</td>
+                        <td>{{rating[9]}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{rating[6]}}</td>
+                        <td>{{rating[7]}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{rating[4]}}</td>
+                        <td>{{rating[5]}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{rating[2]}}</td>
+                        <td>{{rating[3]}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %} Dashboard - CSentiment {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Welcome Message -->
+    <br>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <div class="jumbotron">
+        <h1 class="display-4">Welcome, {{roleName[0][0]}} {{ firstName[0][0] }}!</h1>
+        {% if roleName[0][0] != "SUPER ADMIN" %}
+        <p class="lead">Here are your pending evaluations. Please complete them at your earliest convenience.</p>
+        {% endif %}
+    </div>
+
+    <!-- Evaluations Section  DEAN AND STUDENTS FACULTY-->
+    {% if roleName[0][0] != "SUPER ADMIN" %}
+    <div class="alert alert-info">
+        <p> Filter evaluations by: </p>
+        <form method="POST" action="/dashboard" class="row g-3">
+            <div class="col-md-3">
+                <label for="schoolYear" class="form-label">School Year</label>
+                <select class="form-select" id="schoolYear" name="schoolYear">
+                    {% for year in schoolyear %}
+                    <option value="{{ year[0] }}" {% if school_year|string== year[0]|string %}selected{% endif %}>{{
+                        year[1] }}
+                    </option>
+                    {% endfor %}
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="semester" class="form-label">Semester</label>
+                <select class="form-select" id="semester" name="semester">
+                    <option value="1" {% if semester==
+                    '1' %}selected{% endif %}>First Semester</option>
+                    <option value="2" {% if semester==
+                    '2' %}selected{% endif %}>Second Semester</option>
+                </select>
+
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="/dashboard" class="btn btn-danger">Clear filters</a>
+            </div>
+
+        </form>
+    </div>
+    <div class="row">
+        <!-- Loop through evaluations and display each in a card -->
+<!--        {% if doneEvaluations|length == 0 %}-->
+<!--        <div class="alert alert-warning">-->
+<!--            No evaluations-->
+<!--        </div>-->
+<!--        {% endif %}-->
+        {% for evaluation in evaluations %}
+        {% if roleName[0][0] != "Faculty" %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ evaluation[1] }}</h5>
+                    <p class="card-text">Started on: {{ evaluation[2].strftime('%Y-%m-%d') }}</p>
+                    {% if session["role_id"] == 3 %}
+                    {% if evaluation[8] == 'NOT' %}
+                    <a href="/evaluation/all/all/{{evaluation[0]}}" class="btn btn-primary mb-2">Fill Evaluation</a>
+                    {% else %}
+                    <a href="#" class="btn btn-success mb-2">Evaluated!</a>
+                    {% endif %}
+                    <a href="/teachersevaluation/all/all/{{evaluation[0]}}/all" class="btn btn-primary mb-2">Evaluation
+                        Summary</a>
+                    <a href="/editEvaluation/{{evaluation[0]}}" class="btn btn-info mb-2">Edit Evaluation</a>
+                    {% else %}
+                    <a href="/evaluation/all/all/{{evaluation[0]}}" class="btn btn-primary">Fill Evaluation</a>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted">
+                    Due by: {{ evaluation[3].strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ evaluation[1] }}</h5>
+                    <p class="card-text">Started on: {{ evaluation[2].strftime('%Y-%m-%d') }}</p>
+                    <a href="/viewEvaluation/{{evaluation[0]}}/all/all" class="btn btn-primary">View Evaluation</a>
+                </div>
+                <div class="card-footer text-muted">
+                    Due by: {{ evaluation[3].strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+        {% endfor %}
+
+        {% if roleName[0][0] != "Dean" %}
+        {% for evaluation in doneEvaluations %}
+        {% if roleName[0][0] != "Faculty" %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ evaluation[1] }}</h5>
+                    <p class="card-text">Started on: {{ evaluation[2].strftime('%Y-%m-%d') }}</p>
+                    {% if session["role_id"] == 3 %}
+                    {% if evaluation[8] == 'NOT' %}
+                    <a href="/evaluation/all/all/{{evaluation[0]}}" class="btn btn-primary mb-2">Fill Evaluation</a>
+                    {% endif %}
+                    <a href="/teachersevaluation/all/all/{{evaluation[0]}}/all" class="btn btn-primary mb-2">Evaluation
+                        Summary</a>
+                    <a href="/editEvaluation/{{evaluation[0]}}" class="btn btn-info mb-2">Edit Evaluation</a>
+                    {% else %}
+                    <a href="#" class="btn btn-success">Evaluated!</a>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted">
+                    Due by: {{ evaluation[3].strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+
+
+    <!-- SUPER ADMIN -->
+    {% else %}
+    <div class="alert alert-info">
+        <p> Filter evaluations by: </p>
+        <form method="POST" action="/dashboard" class="row g-3">
+            <div class="col-md-3">
+                <label for="schoolYear" class="form-label">School Year</label>
+                <select class="form-select" id="schoolYear" name="schoolYear">
+                    {% for year in schoolyear %}
+                    <option value="{{ year[0] }}" {% if school_year|string== year[0]|string %}selected{% endif %}>{{
+                        year[1] }}
+                    </option>
+                    {% endfor %}
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="semester" class="form-label">Semester</label>
+                <select class="form-select" id="semester" name="semester">
+                    <option value="1" {% if semester==
+                    '1' %}selected{% endif %}>First Semester</option>
+                    <option value="2" {% if semester==
+                    '2' %}selected{% endif %}>Second Semester</option>
+                    <option value="3" {% if semester==
+                    '3' %}selected{% endif %}>Summer</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="department" class="form-label">Department</label>
+                <select class="form-select" id="department" name="department" onchange="showCollegeDepartments(this)">
+                    <option value="2" {% if department==
+                    '2' %}selected{% endif %} >Junior High School</option>
+                    <option value="3" {% if department==
+                    '3' %}selected{% endif %} >Senior High School</option>
+                    <option value="college" {% if department==
+                    'college' %}selected{% endif %} >College</option>
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+            <div class="col-md-3" id="collegeDepartments" style="display:none;">
+                <label for="collegeDepartment" class="form-label">College Department</label>
+                <select class="form-select" id="collegeDepartment" name="collegeDepartment">
+                    {% for department in departments %}
+                    <option value="{{department[0]}}" {% if departmentId|string== department[0]|string %}selected{%
+                            endif %}>{{department[1]}}
+                    </option>
+                    {% endfor %}
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="/dashboard" class="btn btn-danger">Clear filters</a>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <!-- Loop through evaluations and display each in a card -->
+        {% if doneEvaluations|length == 0 %}
+        <div class="alert alert-warning">
+            No evaluations
+        </div>
+        {% endif %}
+        {% for evaluation in evaluations %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ evaluation[1] }}</h5>
+                    <p class="card-text">Started on: {{ evaluation[2].strftime('%Y-%m-%d') }}</p>
+                    <a href="/viewEvaluationStatistics/{{evaluation[0]}}" class="btn btn-primary">Statistics</a>
+                </div>
+                <div class="card-footer text-muted">
+                    Due by: {{ evaluation[3].strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if roleName[0][0] != "Dean" %}
+        {% for evaluation in doneEvaluations %}
+        {% if roleName[0][0] != "Faculty" %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ evaluation[1] }}</h5>
+                    <p class="card-text">Started on: {{ evaluation[2].strftime('%Y-%m-%d') }}</p>
+                    <a href="/viewEvaluationStatistics/{{evaluation[0]}}" class="btn btn-primary">Statistics</a>
+                </div>
+                <div class="card-footer text-muted">
+                    Due by: {{ evaluation[3].strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <script>
+        function showCollegeDepartments(select) {
+            const collegeDepartments = document.getElementById('collegeDepartments');
+            if (select.value === 'college') {
+                collegeDepartments.style.display = 'block';
+            } else {
+                collegeDepartments.style.display = 'none';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const departmentSelect = document.getElementById('department');
+            showCollegeDepartments(departmentSelect);
+        });
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

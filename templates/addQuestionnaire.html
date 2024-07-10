@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %} Add Questionnaire Template {% endblock %}
+
+{% block content %}
+<div class="container">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+    <div class="row align-items-center">
+        <div class="col-md-9">
+            <h1 class="page-title">Add Evaluation Questionnaire</h1>
+        </div>
+        <div class="col-md-3 text-right">
+            <a href="/viewQuestionnaires" class="btn btn-primary">View Questionnaires</a>
+        </div>
+    </div>
+    <form id="questionnaireForm" method="POST" action="{{ url_for('createQuestionnaire') }}">
+        <div class="form-group">
+            <label for="templateName">Template Name:</label>
+            <input type="text" id="templateName" name="templateName" class="form-control"
+                   placeholder="Enter template name" value="{{ session.get('form_data', {}).get('templateName', '') }}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Template Description:</label>
+            <input type="text" id="description" name="description" class="form-control"
+                   placeholder="Enter template description" value="{{ session.get('form_data', {}).get('description', '') }}" required>
+        </div>
+        <div class="form-group">
+            <label for="modality">For what modality:</label>
+            <select class="form-control" id="modality" name="modality">
+                <option value="ONLINE">ONLINE</option>
+                <option value="FTF">FACE TO FACE</option>
+            </select>
+        </div>
+        {% for section_num in range(1, 6) %}
+        <div class="section" id="section{{ section_num }}">
+            <h2>Section {{ section_num }}</h2>
+            <div class="form-group">
+                <label for="section{{ section_num }}Name">Section Name:</label>
+                <input type="text" id="section{{ section_num }}Name" name="section{{ section_num }}Name"
+                       class="form-control" placeholder="Enter section name" value="{{ session.get('form_data', {}).get('section' ~ section_num ~ 'Name', '') }}" required>
+            </div>
+            <div class="form-group">
+                <label for="section{{ section_num }}Description">Section Description:</label>
+                <input type="text" id="section{{ section_num }}Description" name="section{{ section_num }}Description"
+                       class="form-control" placeholder="Enter section description" value="{{ session.get('form_data', {}).get('section' ~ section_num ~ 'Description', '') }}" required>
+            </div>
+            <div class="form-group">
+                <label for="section{{ section_num }}Percentage">Section Percentage:</label>
+                <input type="number" id="section{{ section_num }}Percentage" name="section{{ section_num }}Percentage"
+                       class="form-control" placeholder="Enter section percentage" value="{{ session.get('form_data', {}).get('section' ~ section_num ~ 'Percentage', '') }}" required>
+            </div>
+            <div id="questionsSection{{ section_num }}">
+                {% for question_num in range(1, 21) %}
+                    {% if session.get('form_data', {}).get('section' ~ section_num ~ 'Question' ~ question_num) %}
+                    <div class="form-group">
+                        <label for="section{{ section_num }}Question{{ question_num }}">Question {{ question_num }}:</label>
+                        <textarea id="section{{ section_num }}Question{{ question_num }}"
+                                  name="section{{ section_num }}Question{{ question_num }}" class="form-control"
+                                  placeholder="Enter question" rows="2" required>{{ session.get('form_data', {}).get('section' ~ section_num ~ 'Question' ~ question_num) }}</textarea>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="addQuestion({{ section_num }})">Add Question</button>
+        </div>
+        {% endfor %}
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Submit Questionnaire</button>
+        </div>
+    </form>
+    <h1 class="page-title">OR</h1>
+
+    <h2 class="page-title">Upload Evaluation Questionnaire</h2>
+    <form id="uploadForm" method="POST" action="{{ url_for('uploadQuestionnaire') }}" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Upload Excel File:</label>
+            <input type="file" id="file" name="file" class="form-control" required>
+        </div>
+         <div class="form-group">
+            <label for="templateNameDownload">Template Name:</label>
+            <input type="text" id="templateNameDownload" name="templateNameDownload" class="form-control"
+                   placeholder="Enter template name" required>
+        </div>
+        <div class="form-group">
+            <label for="descriptionDownload">Template Description:</label>
+            <input type="text" id="descriptionDownload" name="descriptionDownload" class="form-control"
+                   placeholder="Enter template description" required>
+        </div>
+        <div class="form-group">
+            <label for="modality">For what modality:</label>
+            <select class="form-control" id="modality" name="modality">
+                <option value="ONLINE">ONLINE</option>
+                <option value="FTF">FACE TO FACE</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Upload Questionnaire</button>
+        </div>
+    </form>
+        <a class="btn btn-secondary mb-3" href="{{ url_for('downloadTemplate') }}">Download Template</a>
+        <div class="alert alert-warning">Do NOT change anything with the headers (but you can add a column if you want to add more questions in a specific section, eg. Question 6) and the arrangement of the sections in the spreadsheets</div>
+
+</div>
+
+<style>
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        padding: 10px 20px;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+    .section {
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+    }
+
+    .section h2 {
+        margin-top: 0;
+        color: #555;
+    }
+</style>
+
+<script>
+    function addQuestion(sectionNum) {
+        const questionsSection = document.getElementById('questionsSection' + sectionNum);
+        const questionCount = questionsSection.children.length + 1;
+        const questionDiv = document.createElement('div');
+        questionDiv.classList.add('form-group');
+        questionDiv.innerHTML = `
+            <label for="section${sectionNum}Question${questionCount}">Question ${questionCount}:</label>
+            <textarea id="section${sectionNum}Question${questionCount}"
+                      name="section${sectionNum}Question${questionCount}" class="form-control"
+                      placeholder="Enter question" rows="2" required></textarea>
+        `;
+        questionsSection.appendChild(questionDiv);
+    }
+
+    // Re-add questions from old form data if available
+    window.onload = function() {
+        {% for section_num in range(1, 6) %}
+            {% for question_num in range(1, 21) %}
+                {% if session.get('form_data', {}).get('section' ~ section_num ~ 'Question' ~ question_num) %}
+                    addQuestion({{ section_num }});
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    }
+</script>
+{% endblock %}

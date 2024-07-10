@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %} Advanced Evaluation Statistics (Logistic/Decision Tree) {% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<br>
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="text-center mt-4">Advanced Evaluation Statistics</h1>
+            <h3 class="text-center">Logistic Regression and Decision Tree Analysis</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <h4 class="text-center">Part-Time vs Full-Time Analysis</h4>
+            <canvas id="ptFtChart"></canvas>
+        </div>
+        <div class="col-md-6 mb-4">
+            <h4 class="text-center">Online vs Face-to-Face Number of Forms</h4>
+            <canvas id="onlineFtfChart"></canvas>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 offset-md-3 mb-4">
+            <h4 class="text-center">Sentiment Analysis for Classes</h4>
+            <canvas id="sentimentChart"></canvas>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4>Predict Teacher's Sentiment (Decision Tree Model)</h4>
+                    <a class="btn btn-primary mt-2" style="background: #102b5c" href="/decision_tree_report">View Decision Tree Report</a>
+                </div>
+                <div class="card-body">
+                    <form id="predictionForm" method="POST" action="{{ url_for('predict_sentiment') }}">
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="age">Age</label>
+                                <input type="number" class="form-control" id="age" name="age" required>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="employeecategory_id">Employee Category</label>
+                                <select class="form-control" id="employeecategory_id" name="employeecategory_id" required>
+                                    <option value="1">Full-Time</option>
+                                    <option value="2">Part-Time</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="yearsExperience">Years of Experience</label>
+                                <input type="number" class="form-control" id="yearsExperience" name="yearsExperience" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2 d-block mx-auto">Predict Sentiment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4>Predict Probability of Positive Sentiment (Logistic Regression Model)</h4>
+                    <a class="btn btn-primary mt-2" style="background: #102b5c" href="/logistic_regression_report">View Logistic Regression Report</a>
+                </div>
+                <div class="card-body">
+                    <form id="logisticPredictionForm" method="POST" action="{{ url_for('predict_probability') }}">
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="age">Age</label>
+                                <input type="number" class="form-control" id="age" name="age" required>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="employeecategory_id">Employee Category</label>
+                                <select class="form-control" id="employeecategory_id" name="employeecategory_id" required>
+                                    <option value="1">Full-Time</option>
+                                    <option value="2">Part-Time</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="yearsExperience">Years of Experience</label>
+                                <input type="number" class="form-control" id="yearsExperience" name="yearsExperience" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2 d-block mx-auto">Predict Probability</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+    </style>
+</div>
+
+<a href="/updateData" class="btn btn-secondary" style="position: fixed; bottom: 20px; right: 20px;">Refresh Data</a>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ptFtCtx = document.getElementById('ptFtChart').getContext('2d');
+        const onlineFtfCtx = document.getElementById('onlineFtfChart').getContext('2d');
+        const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+
+        const ptFtChart = new Chart(ptFtCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Part-Time', 'Full-Time'],
+                datasets: [{
+                    label: 'Number of Respondents related to Part-Time/Full-Time teachers',
+                    data: {{ pt_ft_data | safe }},
+                    backgroundColor: ['rgba(153, 102, 255, 0.6)', 'rgba(255, 205, 86, 0.6)'],
+                    borderColor: ['rgba(153, 102, 255, 1)', 'rgba(255, 205, 86, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const onlineFtfChart = new Chart(onlineFtfCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Online', 'Face-to-Face'],
+                datasets: [{
+                    label: 'Number of Evaluation Forms for:',
+                    data: {{ online_ftf_data | safe }},
+                    backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const sentimentChart = new Chart(sentimentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Online Classes', 'Face-to-Face Classes'],
+                datasets: [{
+                    label: 'Average Sentiment Score',
+                    data: [{{ online_sentiment_proportions | round(2) }}, {{ ftf_sentiment_proportions | round(2) }}],
+                    backgroundColor: ['rgba(54, 162, 235, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                    borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

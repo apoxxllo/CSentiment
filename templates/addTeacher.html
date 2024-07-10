@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Add a Teacher{% endblock %}
+
+{% block content %}
+<br>
+<div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h2>Add a Teacher</h2>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('addTeacher') }}" method="POST">
+
+                        <div class="form-group">
+                            <label for="idnumber">ID Number</label>
+                            <input type="text" class="form-control" id="idnumber" name="idnumber" placeholder="Enter ID Number" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="firstname">First Name</label>
+                            <input type="text" class="form-control" id="firstname" name="firstname" placeholder="Enter First Name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lastname">Last Name</label>
+                            <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Enter Last Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input type="number" class="form-control" id="age" name="age" placeholder="Enter Age" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="experience">Years of Experience</label>
+                            <input type="number" class="form-control" id="experience" name="experience" placeholder="Enter Last Name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="category">Employee Category</label>
+                            <select name="employeeCategory" id="category" class="form-control">
+                                {% for category in employeeCategory %}
+                                    <option value="{{category[0]}}">{{category[1]}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block mt-2">Add Teacher</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

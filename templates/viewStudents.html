@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <h1 class="page-title text-center mb-4">Students in {{subjectName}}</h1>
+
+
+    <!-- Form for uploading an Excel file -->
+    <div class="mb-4">
+        <form action="{{ url_for('uploadStudents') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <input type="hidden" value="{{subjectid}}" name="subjectId" id="subjectId" hidden readonly>
+                <label for="excelFile">Upload Excel File to enroll students:</label>
+                <input type="file" id="excelFile" name="excelFile" class="form-control-file" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+    </div>
+
+    <!-- Table for displaying students -->
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID Number</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if students|length == 0 %}
+                <tr>
+                    <td colspan="3">No students enrolled</td>
+                </tr>
+                {% endif %}
+                {% for student in students %}
+                <tr>
+                    <td>{{ student[0] }}</td>
+                    <td>{{ student[1] }}</td>
+                    <td>{{ student[2] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mb-4 mt-4">
+        <a href="{{ url_for('downloadTemplateStudents') }}" class="btn btn-success">Download Excel Template (For enrolling students)</a>
+</div>
+<style>
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+        color: #333;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .thead-dark th {
+        background-color: #343a40;
+        color: white;
+    }
+</style>
+{% endblock %}

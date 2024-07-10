@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}View Rating Systems{% endblock %}
+
+{% block content %}
+<br>
+<br>
+<div class="container mt-6">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <h1 class="page-title">Created Rating Systems</h1>
+    {% if ratings|length == 0 %}
+      <div class="alert alert-warning">
+          No rating systems in your department. Create one!
+      </div>
+    {% endif %}
+    {% set i = namespace(c=1)%}
+    {% for rating in ratings %}
+    <div class="card mb-3" style="z-index: 1;">
+        <div class="card-header">
+            <h2>Rating #{{i.c}}</h2>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Title: {{ rating[1] }}</h5> <!-- Questionnaire Name -->
+<!--            <p class="card-text">{{ rating[2] }}</p> &lt;!&ndash; Questionnaire Description &ndash;&gt;-->
+            <a href="/viewRating/{{rating[0]}}" class="btn btn-primary mb-2">View Rating System</a>
+            <form method="POST" action="/deleteRating/{{ rating[0] }}"
+                  onsubmit="return confirmDelete()">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% set i.c = i.c+1 %}
+    {% endfor %}
+</div>
+<script>
+function confirmDelete() {
+    return confirm('Are you sure you want to delete this rating system?');
+}
+</script>
+{% endblock %}

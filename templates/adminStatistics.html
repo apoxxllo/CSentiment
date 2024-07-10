@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %} Statistics Page {% endblock %}
+
+{% block content %}
+<script>
+    function showCollegeDepartments(select) {
+        const collegeDepartments = document.getElementById('collegeDepartments');
+        if (select.value === 'college') {
+            collegeDepartments.style.display = 'block';
+        } else {
+            collegeDepartments.style.display = 'none';
+        }
+    }
+</script>
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="text-center mt-3">Statistics Page</h1>
+        </div>
+    </div>
+    <form id="filterForm" method="POST" action="{{ url_for('statistics') }}" class="mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="schoolYear">School Year</label>
+                    <select class="form-select" id="schoolYear" name="schoolYear">
+                        {% for year in schoolyear %}
+                        <option value="{{ year[0] }}" {% if school_year|string== year[0]|string %}selected{% endif %}>{{
+                            year[1] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="semester">Semester</label>
+                    <select class="form-select" id="semester" name="semester">
+                        <option value="1" {% if semester==
+                        '1' %}selected{% endif %}>First Semester</option>
+                        <option value="2" {% if semester==
+                        '2' %}selected{% endif %}>Second Semester</option>
+                        <!-- Add more options as needed -->
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <select class="form-select" id="department" name="department"
+                            onchange="showCollegeDepartments(this)">
+                        <option value="2" {% if department==
+                        '2' %}selected{% endif %}>Junior High School</option>
+                        <option value="3" {% if department==
+                        '3' %}selected{% endif %}>Senior High School</option>
+                        <option value="college" {% if department==
+                        'college' %}selected{% endif %}>College</option>
+                        <!-- Add more options as needed -->
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3" id="collegeDepartments" style="display:none;">
+                <label for="collegeDepartment" class="form-label">College Department</label>
+                <select class="form-select" id="collegeDepartment" name="collegeDepartment">
+                    {% for department in departments %}
+                    <option value="{{ department[0] }}" {% if college_department== department[0]|string %}selected{%
+                            endif %}>{{ department[1] }}
+                    </option>
+                    {% endfor %}
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+            <div class="col-md-12 text-right">
+                <button type="submit" class="btn btn-primary mt-3">Filter</button>
+                <a href="{{ url_for('statistics') }}" class="btn btn-danger mt-3">Clear Filter</a>
+            </div>
+        </div>
+    </form>
+    <div class="row">
+        <div class="col-md-6">
+            <canvas id="studentGraph"></canvas>
+        </div>
+        <div class="col-md-6">
+            <canvas id="respondentGraph"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const studentCtx = document.getElementById('studentGraph').getContext('2d');
+        const respondentCtx = document.getElementById('respondentGraph').getContext('2d');
+
+        const studentChart = new Chart(studentCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ student_labels | safe }},
+                datasets: [{
+                    label: 'Number of Students',
+                    data: {{ student_data | safe }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const respondentChart = new Chart(respondentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Full Time', 'Part Time'],
+                datasets: [{
+                    label: 'Teachers',
+                    data: {{ respondent_data | safe }},
+                    backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Show the college departments if the 'college' option is selected
+        if (document.getElementById('department').value === 'college') {
+            document.getElementById('collegeDepartments').style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

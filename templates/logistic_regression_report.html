@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Logistic Regression Report{% endblock %}
+
+{% block content %}
+<br>
+<div class="container mt-4">
+    <h1 class="text-center mt-4">Logistic Regression Report</h1>
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Precision</th>
+                        <th>Recall</th>
+                        <th>F1-Score</th>
+                        <th>Support</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for label, metrics in report.items() %}
+                    {% if label not in ['accuracy', 'macro avg', 'weighted avg'] %}
+                    <tr>
+                        <td>{{ label }}</td>
+                        <td>{{ metrics['precision']|round(2) }}</td>
+                        <td>{{ metrics['recall']|round(2) }}</td>
+                        <td>{{ metrics['f1-score']|round(2) }}</td>
+                        <td>{{ metrics['support'] }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h3 class="text-center">Overall Metrics</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Accuracy</td>
+                        <td>{{ report['accuracy']|round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Macro Average F1-Score</td>
+                        <td>{{ report['macro avg']['f1-score']|round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Weighted Average F1-Score</td>
+                        <td>{{ report['weighted avg']['f1-score']|round(2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

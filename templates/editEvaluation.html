@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Evaluation Form{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <div class="row align-items-center">
+        <div class="col-md-12">
+            <h1 class="page-title">Edit Evaluation Form</h1>
+        </div>
+    </div>
+    <form id="questionnaireForm" method="POST" action="{{ url_for('editEvaluation', evaluationFormId=evaluationForm[0]) }}">
+        <div class="form-group">
+            <label for="title">Evaluation Title:</label>
+            <input type="text" id="title" name="title" class="form-control" value="{{ evaluationForm[1] }}" required>
+        </div>
+        <div class="form-group">
+            <label for="set">Questionnaire Set:</label>
+            <select id="set" name="set" class="form-control" required>
+                <option value="" disabled>Select Questionnaire Template</option>
+                {% for set in sets %}
+                <option value="{{ set[0] }}" {% if set[0] == evaluationForm[4] %} selected {% endif %}>{{ set[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="semester">Semester:</label>
+            <select id="semester" name="semester" class="form-control" required>
+                <option value="" disabled>Select Semester</option>
+                {% for semester in semesters %}
+                <option value="{{ semester[0] }}" {% if semester[0] == evaluationForm[5] %} selected {% endif %}>{{ semester[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="rating">Rating System:</label>
+            <select id="rating" name="rating" class="form-control" required>
+                <option value="" disabled>Select Rating System</option>
+                {% for rating in ratings %}
+                <option value="{{ rating[0] }}" {% if rating[0] == evaluationForm[7] %} selected {% endif %}>{{ rating[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="schoolYear">School Year:</label>
+            <select id="schoolYear" name="schoolYear" class="form-control" required>
+                <option value="" disabled>Select School Year</option>
+                {% for year in years %}
+                <option value="{{ year[0] }}" {% if year[0] == evaluationForm[6] %} selected {% endif %}>{{ year[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="dateStart">Start Date:</label>
+            <input type="date" id="dateStart" name="dateStart" class="form-control" value="{{ evaluationForm[2].strftime('%Y-%m-%d') }}" required>
+        </div>
+        <div class="form-group">
+            <label for="dateEnd">End Date:</label>
+            <input type="date" id="dateEnd" name="dateEnd" class="form-control" value="{{ evaluationForm[3].strftime('%Y-%m-%d') }}" required>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Update Questionnaire</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        padding: 10px 20px;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+    .section {
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+    }
+
+    .section h2 {
+        margin-top: 0;
+        color: #555;
+    }
+</style>
+{% endblock %}

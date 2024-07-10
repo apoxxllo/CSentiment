@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %} List of Deans {% endblock %}
+
+{% block content %}
+<br>
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="text-center">List of Deans</h1>
+        </div>
+    </div>
+    <div class="row">
+        {% for department in departments %}
+        <div class="col-md-12 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h4>{{ department.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <p><strong>Dean:</strong> {{ department.dean_name or 'None' }}</p>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            {% if department.dean_name %}
+                            <button class="btn btn-primary" data-toggle="collapse"
+                                    data-target="#changeDean{{ department.id }}">
+                                Change Dean
+                            </button>
+                            {% else %}
+                            <button class="btn btn-primary" data-toggle="collapse"
+                                    data-target="#addDean{{ department.id }}">
+                                Add Dean
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if department.dean_name %}
+                    <div id="changeDean{{ department.id }}" class="collapse mt-3">
+                        <form id="changeDeanForm{{ department.id }}" method="POST"
+                              action="{{ url_for('change_dean', department_id=department.id) }}">
+                            <div class="form-group">
+                                <label for="dean{{ department.id }}">Select New Dean</label>
+                                <select class="form-control" id="dean{{ department.id }}" name="new_dean_id">
+                                    {% for user in department.users %}
+                                    <option value="{{ user[0] }}">{{ user[1] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success mt-3">Submit</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div id="addDean{{ department.id }}" class="collapse mt-3">
+                        <form id="addDeanForm{{ department.id }}" method="POST"
+                              action="{{ url_for('add_dean', department_id=department.id) }}">
+                            <div class="form-group">
+                                <label for="firstName{{ department.id }}">First Name</label>
+                                <input type="text" class="form-control" id="firstName{{ department.id }}" name="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName{{ department.id }}">Last Name</label>
+                                <input type="text" class="form-control" id="lastName{{ department.id }}" name="lastName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="idNumber{{ department.id }}">ID Number</label>
+                                <input type="text" class="form-control" id="idNumber{{ department.id }}" name="idNumber" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="age{{ department.id }}">Age</label>
+                                <input type="number" class="form-control" id="age{{ department.id }}" name="age" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="yearsExperience{{ department.id }}">Years of Experience</label>
+                                <input type="number" class="form-control" id="yearsExperience{{ department.id }}" name="yearsExperience" required>
+                            </div>
+                            <button type="submit" class="btn btn-success mt-3">Submit</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        background-color: #007bff;
+        color: white;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        padding: 10px 20px;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+        padding: 10px 20px;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #218838;
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('[data-toggle="collapse"]').click(function() {
+            var target = $(this).data('target');
+            $(target).collapse('toggle');
+        });
+    });
+</script>
+{% endblock %}

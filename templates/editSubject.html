@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Subject{% endblock %}
+
+{% block content %}
+<br>
+<div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h2>Edit Subject</h2>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('editSubject', subjectid=subject[0]) }}" method="POST">
+
+                        <div class="form-group">
+                            <label for="edpcode">EDP Code</label>
+                            <input type="text" value="{{subject[2]}}" class="form-control" id="edpcode" name="edpcode" placeholder="Enter ID Number" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="title">Subject Title</label>
+                            <input type="text" class="form-control" value="{{subject[3]}}" id="title" name="title" placeholder="Enter First Name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="teacher">Teacher of this subject</label>
+                            <select name="teacher" id="teacher" class="form-control">
+                                <option disabled selected>SELECT</option>
+                                {% for teacher in teachers %}
+                                <option value="{{teacher[0]}}" {% if teacher[0] == subject[1] %} selected {% endif %}> {{teacher[3]}} {{teacher[4]}}</option>
+                                {% endfor %}
+                            </select>
+
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block mt-2">Edit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
