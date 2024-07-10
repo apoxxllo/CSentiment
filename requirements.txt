@@ -60,6 +60,7 @@ pytz==2020.4
 regex==2021.10.23
 requests-file==1.5.1
 requests==2.26.0
+rembg~=2.0.57
 rfc3986==1.5.0
 sentiment==0.0.1
 sequential==1.0.0
