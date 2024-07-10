@@ -186,7 +186,7 @@ def dashboard():
             questionnairesets = [0, 0]
         questionnairesets = tuple(questionnairesets)
 
-    sql = "SELECT * FROM evaluationForms WHERE questionnaireset_id IN %s"
+    sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s"
     cur.execute(sql, (questionnairesets,))
     evaluationsAll = cur.fetchall()
     evaluations = []
@@ -220,7 +220,7 @@ def dashboard():
         if len(questionnairesets) == 0:
             questionnairesets = (0,0)
         print(type(questionnairesets))
-        sql = "SELECT * FROM evaluationForms WHERE questionnaireset_id IN %s"
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s"
         cur.execute(sql, (questionnairesets,))
         evaluationsAll = cur.fetchall()
         evaluations = []
@@ -256,7 +256,7 @@ def dashboard():
         if len(questionnairesets) == 0:
             questionnairesets = (0, 0)
         print(type(questionnairesets))
-        sql = "SELECT * FROM evaluationForms WHERE questionnaireset_id IN %s"
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s"
         cur.execute(sql, (questionnairesets,))
         evaluationsAll = cur.fetchall()
         evaluations = []
