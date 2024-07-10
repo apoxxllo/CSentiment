@@ -47,7 +47,7 @@ if platform.system() == "Windows":
     app.config['MYSQL_DB'] = 'isent'
 # in deployment
 else:
-    app.config['MYSQL_HOST'] = 'sql203.infinityfree.com'
+    app.config['MYSQL_HOST'] = 'sql203.bytecluster.com'
     app.config['MYSQL_USER'] = 'if0_36875011'
     app.config['MYSQL_PASSWORD'] = 'Jules-0019'
     app.config['MYSQL_DB'] = 'if0_36875011_isent'
