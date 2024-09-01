@@ -2,6 +2,10 @@ runtime: python39
 env: flex
 entrypoint: gunicorn -b :$PORT app:app -t 600
 
+runtime_config:
+    operating_system: "ubuntu22"
+    runtime_version: "3.9"
+
 handlers:
 - url: /static
   static_dir: static
