@@ -4,7 +4,7 @@ entrypoint: gunicorn -b :$PORT app:app -t 600
 
 runtime_config:
     operating_system: "ubuntu22"
-    runtime_version: "3.9"
+    runtime_version: "3.9.12"
 
 handlers:
 - url: /static
