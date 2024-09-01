@@ -3548,21 +3548,6 @@ with app.app_context():
             'sec5Name': sec5Name,
 
         }
-        # data = [
-        #     ("Section1", sec1),
-        #     ("Section2", sec2),
-        #     ("Section3", sec3),
-        #     ("Section4", sec4),
-        #     ("Section5", sec5),
-        #     ("Comments", comment),
-        #     ("Teacher", G_TEACHER_NAME),
-        #     ("Subject", G_SUBJECT_NAME),
-        #     ("Respondents", G_NUMBER_OF_RESPONDENTS),
-        #     ("posAve", posAve),
-        #     ("negAve", negAve),
-        #     ("neuAve", neuAve),
-        # ]
-        # data = list(test.items())
         cur.close()
         resp = requests.post('http://127.0.0.1:8000/reportGeneration', json=test, stream=True)
         #resp = requests.post('https://csentimentapi.herokuapp.com/reportGeneration', json=data, stream=True)
