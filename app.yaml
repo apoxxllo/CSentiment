@@ -1,6 +1,6 @@
 runtime: python
 env: flex
-entrypoint: gunicorn -b :$PORT app:app -t 600
+entrypoint: gunicorn -b :$PORT main:app -t 600
 
 handlers:
 - url: /static
