@@ -7,6 +7,5 @@ handlers:
 - url: /.*
   script: app.app
 
-#libraries:
-#  - name: ssl
-#    version: latest
+resources:
+  memory_gb: 4
