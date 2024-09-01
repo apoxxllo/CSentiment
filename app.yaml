@@ -14,3 +14,6 @@ runtime_config:
 
 resources:
   memory_gb: 4
+
+env_variables:
+  PIP_NO_BINARY: pandas
