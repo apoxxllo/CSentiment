@@ -53,17 +53,16 @@ else:
     app.config['MYSQL_DB'] = 'isent'
     app.config['MYSQL_PORT'] = 10067
 
-    #old-db
-    #app.config['MYSQL_HOST'] = 'mysql-76692-0.cloudclusters.net';
-    #app.config['MYSQL_USER'] = 'dbuser';
-    #app.config['MYSQL_PASSWORD'] = 'dbuser123';
-    #app.config['MYSQL_DB'] = 'isent';
-    #app.config['MYSQL_PORT'] = 14859;
+    # old-db
+    # app.config['MYSQL_HOST'] = 'mysql-76692-0.cloudclusters.net';
+    # app.config['MYSQL_USER'] = 'dbuser';
+    # app.config['MYSQL_PASSWORD'] = 'dbuser123';
+    # app.config['MYSQL_DB'] = 'isent';
+    # app.config['MYSQL_PORT'] = 14859;
 
 mysql = MySQL(app)
 
 cors = CORS(app)
-
 
 G_TEACHER_ID = None
 G_SUBJECT_ID = None
@@ -75,6 +74,7 @@ G_CATEGORY_EMPLOYEE_ID = None
 G_SCHOOL_ID = None
 G_DEPARTMENT_ID = None
 G_CATEGORY_NAME = None
+
 
 @app.route('/logout', methods=["POST", "GET"])
 def logout():
@@ -106,7 +106,6 @@ def login():
         session['department_id'] = user[6]
         session['school_id'] = user[7]
         session['category_id'] = user[8]
-
 
         cur.close()
 
@@ -150,7 +149,7 @@ def login():
         return render_template("login.html")
 
 
-@app.route("/dashboard", methods = ["POST", "GET"])
+@app.route("/dashboard", methods=["POST", "GET"])
 def dashboard():
     if 'userId' not in session:
         # If there's no user_id in the session, assume session is gone and logout
@@ -215,20 +214,22 @@ def dashboard():
     schoolyear = cur.fetchall()
 
     if roleId == 3:
-        cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+        cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                    (session['school_id'], session['department_id']))
         questionnairesets = cur.fetchall()
         if len(questionnairesets) == 0:
-            questionnairesets = (0,0)
+            questionnairesets = (0, 0)
         print(type(questionnairesets))
         sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s"
         cur.execute(sql, (questionnairesets,))
         evaluationsAll = cur.fetchall()
         evaluations = []
         for evaluation in evaluationsAll:
-            cur.execute("SELECT id FROM users WHERE school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+            cur.execute("SELECT id FROM users WHERE school_id = %s and department_id = %s",
+                        (session['school_id'], session['department_id']))
             teachers_id = cur.fetchall()
             if len(teachers_id) == 0:
-                teachers_id = [0,0]
+                teachers_id = [0, 0]
                 teachers_id = tuple(teachers_id)
 
             cur.execute("SELECT * FROM subjects WHERE teacherId in %s", (teachers_id,))
@@ -423,9 +424,17 @@ def dashboard():
 
         print(evaluations)
         cur.close()
-        return render_template("dashboard.html", departmentId=college_department, department=departmentName, school_year = school_year, semester=semester, schoolyear=schoolyear, doneEvaluations=doneEvaluations, departments=college_departments, evaluations=evaluations, firstName=firstName, roleName=roleName, categoryName=category_name)
+        return render_template("dashboard.html", departmentId=college_department, department=departmentName,
+                               school_year=school_year, semester=semester, schoolyear=schoolyear,
+                               doneEvaluations=doneEvaluations, departments=college_departments,
+                               evaluations=evaluations, firstName=firstName, roleName=roleName,
+                               categoryName=category_name)
     else:
-        return render_template("dashboard.html",school_year = school_year, semester=semester, schoolyear=schoolyear, doneEvaluations=doneEvaluations, departments=college_departments, evaluations=evaluations, firstName=firstName, roleName=roleName, categoryName=category_name)
+        return render_template("dashboard.html", school_year=school_year, semester=semester, schoolyear=schoolyear,
+                               doneEvaluations=doneEvaluations, departments=college_departments,
+                               evaluations=evaluations, firstName=firstName, roleName=roleName,
+                               categoryName=category_name)
+
 
 @app.route('/viewEvaluationStatistics/<evaluationFormId>', methods=['GET'])
 def viewEvaluationStatistics(evaluationFormId):
@@ -451,7 +460,7 @@ def viewEvaluationStatistics(evaluationFormId):
 
     cur.execute("SELECT semester FROM semester WHERE id = %s", (semester_id,))
     semester = cur.fetchone()[0]
-    
+
     cur.execute("SELECT schoolyear FROM schoolyear WHERE id = %s", (schoolyear_id,))
     school_year = cur.fetchone()[0]
 
@@ -465,7 +474,8 @@ def viewEvaluationStatistics(evaluationFormId):
         studentsSubjectIds = cur.fetchall()
         takenAll = True
         for subjectId in studentsSubjectIds:
-            cur.execute("SELECT * FROM evaluation WHERE idstudent = %s and subject_id = %s and evaluationform_id = %s", (id, subjectId, evaluationFormId))
+            cur.execute("SELECT * FROM evaluation WHERE idstudent = %s and subject_id = %s and evaluationform_id = %s",
+                        (id, subjectId, evaluationFormId))
             res = cur.fetchall()
             if not res:
                 notResponded += 1
@@ -481,15 +491,18 @@ def viewEvaluationStatistics(evaluationFormId):
     if not fulltime_ids:
         fulltime_ids = (0,)
 
-    cur.execute("SELECT AVG(pos) FROM evaluation WHERE evaluationForm_id = %s and idteacher in %s", (evaluationFormId, fulltime_ids))
+    cur.execute("SELECT AVG(pos) FROM evaluation WHERE evaluationForm_id = %s and idteacher in %s",
+                (evaluationFormId, fulltime_ids))
     positive_fullTime = cur.fetchone()[0]
     if positive_fullTime is None:
         positive_fullTime = 0
-    cur.execute("SELECT AVG(neu) FROM evaluation WHERE evaluationForm_id = %s and idteacher in %s", (evaluationFormId, fulltime_ids))
+    cur.execute("SELECT AVG(neu) FROM evaluation WHERE evaluationForm_id = %s and idteacher in %s",
+                (evaluationFormId, fulltime_ids))
     neutral_fullTime = cur.fetchone()[0]
     if neutral_fullTime is None:
         neutral_fullTime = 0
-    cur.execute("SELECT AVG(neg) FROM evaluation WHERE evaluationForm_id = %s and idteacher in %s", (evaluationFormId, fulltime_ids))
+    cur.execute("SELECT AVG(neg) FROM evaluation WHERE evaluationForm_id = %s and idteacher in %s",
+                (evaluationFormId, fulltime_ids))
     negative_fullTime = cur.fetchone()[0]
     if negative_fullTime is None:
         negative_fullTime = 0
@@ -514,10 +527,10 @@ def viewEvaluationStatistics(evaluationFormId):
     if negative_partTime is None:
         negative_partTime = 0
 
-
-
-    full_time_sentiment_data = [positive_fullTime, negative_fullTime, neutral_fullTime]  # Example: Positive, Negative, Neutral for full-time
-    part_time_sentiment_data = [positive_partTime, negative_partTime, neutral_partTime]  # Example: Positive, Negative, Neutral for part-time
+    full_time_sentiment_data = [positive_fullTime, negative_fullTime,
+                                neutral_fullTime]  # Example: Positive, Negative, Neutral for full-time
+    part_time_sentiment_data = [positive_partTime, negative_partTime,
+                                neutral_partTime]  # Example: Positive, Negative, Neutral for part-time
 
     cur.execute("SELECT count(*) FROM users WHERE employeecategory_id = 1 and department_id = %s", (department_id,))
     full_time_count = cur.fetchone()[0]
@@ -533,6 +546,7 @@ def viewEvaluationStatistics(evaluationFormId):
                            full_time_sentiment_data=full_time_sentiment_data, full_part_time_data=full_part_time_data,
                            part_time_sentiment_data=part_time_sentiment_data, evaluationName=evaluationName)
 
+
 @app.route('/addSubject', methods=["GET", "POST"])
 def addSubject():
     if 'userId' not in session:
@@ -543,7 +557,8 @@ def addSubject():
         return redirect(url_for('dashboard'))
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM users where role_id = 2 and school_id = %s and department_id = %s;", (session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM users where role_id = 2 and school_id = %s and department_id = %s;",
+                (session['school_id'], session['department_id']))
     teachers = cur.fetchall()
 
     cur.close()
@@ -563,7 +578,7 @@ def addSubject():
                     (edpCode, title, instructor_id))
 
         mysql.connection.commit()
-        flash('Successfully added subject ' + title + '!','success')
+        flash('Successfully added subject ' + title + '!', 'success')
         return redirect(url_for('addSubject'))
 
     else:
@@ -588,7 +603,8 @@ def editSubject(subjectid):
         teachers_id = [0, 0]
         teachers_id = tuple(teachers_id)
 
-    cur.execute("SELECT * FROM users where role_id = 2 and school_id = %s and department_id = %s;", (session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM users where role_id = 2 and school_id = %s and department_id = %s;",
+                (session['school_id'], session['department_id']))
     teachers = cur.fetchall()
     cur.execute("SELECT * FROM subjects where id = %s and teacherId in %s", (subjectid, teachers_id,))
     subject = cur.fetchone()
@@ -606,11 +622,13 @@ def editSubject(subjectid):
                     (edpCode, title, instructor_id, subjectid))
 
         mysql.connection.commit()
-        flash('Successfully updated subject ' + title + '!','success')
+        flash('Successfully updated subject ' + title + '!', 'success')
         return redirect(url_for('subjects'))
 
     else:
         return render_template('editSubject.html', teachers=teachers, subject=subject)
+
+
 @app.route("/subjects", methods=["GET"])
 def subjects():
     if 'userId' not in session:
@@ -620,17 +638,19 @@ def subjects():
         flash('Unauthorized access!', 'danger')
         return redirect(url_for('dashboard'))
 
-
     cur = mysql.connection.cursor()
 
-    cur.execute("SELECT id FROM users WHERE role_id = 2 and school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+    cur.execute("SELECT id FROM users WHERE role_id = 2 and school_id = %s and department_id = %s",
+                (session['school_id'], session['department_id']))
     teachers_id = cur.fetchall()
 
     if len(teachers_id) == 0:
-        teachers_id = [0,0]
+        teachers_id = [0, 0]
         teachers_id = tuple(teachers_id)
 
-    cur.execute('SELECT edpcode, title, users.firstName, users.lastName, subjects.id FROM subjects INNER JOIN users ON users.id = subjects.teacherId WHERE users.id IN %s', (teachers_id,))
+    cur.execute(
+        'SELECT edpcode, title, users.firstName, users.lastName, subjects.id FROM subjects INNER JOIN users ON users.id = subjects.teacherId WHERE users.id IN %s',
+        (teachers_id,))
     subjects = cur.fetchall()
 
     cur.execute("SELECT * FROM subjects WHERE teacherId IS NULL;")
@@ -638,6 +658,7 @@ def subjects():
 
     cur.close()
     return render_template('subjects.html', subjects=subjects, subjects_with_no_teacher=subjects_with_no_teacher)
+
 
 @app.route('/addTeacher', methods=["GET", "POST"])
 def addTeacher():
@@ -662,8 +683,10 @@ def addTeacher():
             flash('User already existing!', 'danger')
             return redirect(url_for('addTeacher'))
 
-        cur.execute("INSERT INTO users(idnumber, firstname, lastname, password, role_id, school_id, department_id, employeecategory_id, age, yearsExperience) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                    (idnumber, firstName, lastName, idnumber, 2, session['school_id'], session['department_id'], employee_category_id, age, experience))
+        cur.execute(
+            "INSERT INTO users(idnumber, firstname, lastname, password, role_id, school_id, department_id, employeecategory_id, age, yearsExperience) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (idnumber, firstName, lastName, idnumber, 2, session['school_id'], session['department_id'],
+             employee_category_id, age, experience))
 
         mysql.connection.commit()
         cur.close()
@@ -675,6 +698,8 @@ def addTeacher():
         cur.execute("SELECT * FROM employeecategory")
         employeeCategory = cur.fetchall()
         return render_template('addTeacher.html', employeeCategory=employeeCategory)
+
+
 @app.route('/deleteTeacher', methods=["POST"])
 def deleteTeacher():
     if 'userId' not in session:
@@ -691,6 +716,8 @@ def deleteTeacher():
 
     flash('Instructor deleted successfully.', 'success')
     return redirect(url_for('teachers'))  # Redirect to an appropriate page
+
+
 @app.route("/teachers", methods=["GET"])
 def teachers():
     if 'userId' not in session:
@@ -701,11 +728,13 @@ def teachers():
         return redirect(url_for('dashboard'))
 
     cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM users WHERE role_id = 2 and school_id = %s and department_id = %s', (session['school_id'], session['department_id']))
+    cur.execute('SELECT * FROM users WHERE role_id = 2 and school_id = %s and department_id = %s',
+                (session['school_id'], session['department_id']))
     instructors = cur.fetchall()
 
     cur.close()
     return render_template('teachers.html', teachers=instructors)
+
 
 @app.route("/yourSubjects", methods=["GET"])
 def yourSubjects():
@@ -719,18 +748,22 @@ def yourSubjects():
     userId = session['userId']
 
     cur = mysql.connection.cursor()
-    cur.execute('SELECT edpcode, title, users.firstName, users.lastName, subjects.id FROM subjects INNER JOIN users ON users.id = subjects.teacherId WHERE teacherId = %s', (userId,))
+    cur.execute(
+        'SELECT edpcode, title, users.firstName, users.lastName, subjects.id FROM subjects INNER JOIN users ON users.id = subjects.teacherId WHERE teacherId = %s',
+        (userId,))
     subjects = cur.fetchall()
-
 
     cur.close()
     return render_template('yourSubjects.html', subjects=subjects)
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xls', 'xlsx']
 
+
 def allowed_file_image(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['jpg', 'jpeg', 'png', 'gif']
+
 
 @app.route("/uploadStudents", methods=["POST"])
 def uploadStudents():
@@ -751,7 +784,9 @@ def uploadStudents():
             # Check for required headers
             required_headers = ['ID Number', 'First Name', 'Last Name']
             if not all(header in df.columns for header in required_headers):
-                flash('Invalid file headers. Please make sure the Excel file has the correct headers: ID Number, First Name, Last Name.', 'danger')
+                flash(
+                    'Invalid file headers. Please make sure the Excel file has the correct headers: ID Number, First Name, Last Name.',
+                    'danger')
                 return redirect(url_for('viewStudents', subjectid=subjectid))
 
             for index, row in df.iterrows():
@@ -764,8 +799,9 @@ def uploadStudents():
                 existing = cur.fetchone()
 
                 if not existing:
-                    cur.execute("INSERT INTO users (idnumber, firstname, lastname, password, role_id, school_id, department_id) VALUES (%s, %s, %s, %s, 1, %s, %s)",
-                                (idnumber, firstname, lastname, idnumber, session['school_id'], session['department_id']))
+                    cur.execute(
+                        "INSERT INTO users (idnumber, firstname, lastname, password, role_id, school_id, department_id) VALUES (%s, %s, %s, %s, 1, %s, %s)",
+                        (idnumber, firstname, lastname, idnumber, session['school_id'], session['department_id']))
                     studentId = cur.lastrowid
                     cur.execute(
                         "INSERT INTO studentsubjects (student_id, subject_id) VALUES (%s, %s)",
@@ -776,11 +812,13 @@ def uploadStudents():
                     alreadyInSubject = cur.fetchone()
                     if not alreadyInSubject:
                         cur.execute(
-                        "INSERT INTO studentsubjects (student_id, subject_id) VALUES (%s, %s)",
+                            "INSERT INTO studentsubjects (student_id, subject_id) VALUES (%s, %s)",
                             (existing[0], subjectid))
 
                 mysql.connection.commit()
-            flash('Students successfully uploaded and added. Their default password is their ID number (changeable in their profile accounts).', 'success')
+            flash(
+                'Students successfully uploaded and added. Their default password is their ID number (changeable in their profile accounts).',
+                'success')
         except Exception as e:
             flash(f'Error processing file: {e}', 'danger')
             return redirect(url_for('viewStudents', subjectid=subjectid))
@@ -799,7 +837,6 @@ def viewStudents(subjectid):
     if session["role_id"] != 2 and session['role_id'] != 3:
         flash('Unauthorized access!', 'danger')
         return redirect(url_for('dashboard'))
-
 
     cur = mysql.connection.cursor()
     cur.execute("SELECT id FROM users WHERE role_id = 2 and school_id = %s and department_id = %s",
@@ -824,7 +861,9 @@ def viewStudents(subjectid):
             return redirect(url_for('dashboard'))
 
     subjectName = subject[3]
-    cur.execute("SELECT users.idnumber, users.firstName, users.lastName FROM studentsubjects INNER JOIN users ON users.id = studentsubjects.student_id WHERE subject_id = %s", (subjectid,))
+    cur.execute(
+        "SELECT users.idnumber, users.firstName, users.lastName FROM studentsubjects INNER JOIN users ON users.id = studentsubjects.student_id WHERE subject_id = %s",
+        (subjectid,))
     students = cur.fetchall()
     cur.close()
     return render_template('viewStudents.html', students=students, subjectid=subjectid, subjectName=subjectName)
@@ -854,6 +893,7 @@ def changePassword():
 
     cur.close()
     return redirect(url_for('profile'))
+
 
 @app.route('/profile', methods=["GET"])
 def profile():
@@ -909,7 +949,8 @@ def upload_signature():
         # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         # Update the user details in the database to store the filename
         cur = mysql.connection.cursor()
-        cur.execute("UPDATE users SET esignature = %s WHERE id = %s", (filename.rsplit('.', 1)[0] + '.png', session["userId"]))
+        cur.execute("UPDATE users SET esignature = %s WHERE id = %s",
+                    (filename.rsplit('.', 1)[0] + '.png', session["userId"]))
         mysql.connection.commit()
         flash('E-signature uploaded successfully!', 'success')
         return redirect(url_for('profile'))
@@ -985,14 +1026,16 @@ def createQuestionnaire():
         return redirect(url_for('addQuestionnaire'))
 
     # Insert into questionnaireset table
-    cur.execute("INSERT INTO questionnaireset (name, description, school_id, department_id, modality) VALUES (%s, %s, %s, %s, %s)",
-                (template_name, template_description, session['school_id'], session['department_id'], modality))
+    cur.execute(
+        "INSERT INTO questionnaireset (name, description, school_id, department_id, modality) VALUES (%s, %s, %s, %s, %s)",
+        (template_name, template_description, session['school_id'], session['department_id'], modality))
     questionnaireset_id = cur.lastrowid
 
     # Iterate over each section and insert into the database
     for section in sections:
-        cur.execute("INSERT INTO section (section, name, description, percentage, questionnaireset_id) VALUES (%s, %s, %s, %s, %s)",
-                    (section['number'], section['name'], section['description'], section['percentage'], questionnaireset_id))
+        cur.execute(
+            "INSERT INTO section (section, name, description, percentage, questionnaireset_id) VALUES (%s, %s, %s, %s, %s)",
+            (section['number'], section['name'], section['description'], section['percentage'], questionnaireset_id))
         section_id = cur.lastrowid
 
         # Dynamically find all questions for the current section
@@ -1052,6 +1095,7 @@ def downloadTemplateStudents():
         }
     )
 
+
 @app.route("/downloadTemplate")
 def downloadTemplate():
     if 'userId' not in session:
@@ -1078,6 +1122,8 @@ def downloadTemplate():
     return Response(output,
                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"Content-Disposition": "attachment;filename=evaluation_template.xlsx"})
+
+
 @app.route("/uploadQuestionnaire", methods=["POST"])
 def uploadQuestionnaire():
     if 'userId' not in session:
@@ -1095,7 +1141,9 @@ def uploadQuestionnaire():
         template_name = request.form.get('templateNameDownload')
         description = request.form.get('descriptionDownload')
         modality = request.form.get('modality')
-        cur.execute("INSERT INTO questionnaireset (name, description, school_id, department_id, modality) VALUES (%s, %s, %s, %s, %s)", (template_name, description, session['school_id'], session['department_id'], modality))
+        cur.execute(
+            "INSERT INTO questionnaireset (name, description, school_id, department_id, modality) VALUES (%s, %s, %s, %s, %s)",
+            (template_name, description, session['school_id'], session['department_id'], modality))
         questionnaireset_id = cur.lastrowid
 
         # For trapping
@@ -1154,8 +1202,9 @@ def uploadQuestionnaire():
             section_name = df.iloc[0]['Section Name']
             section_description = df.iloc[0]['Section Description']
             section_percentage = df.iloc[0]['Section Percentage']
-            cur.execute("INSERT INTO section (section, name, description, percentage, questionnaireset_id) VALUES (%s, %s, %s, %s, %s)",
-                        (section_num, section_name, section_description, section_percentage, questionnaireset_id))
+            cur.execute(
+                "INSERT INTO section (section, name, description, percentage, questionnaireset_id) VALUES (%s, %s, %s, %s, %s)",
+                (section_num, section_name, section_description, section_percentage, questionnaireset_id))
             section_id = cur.lastrowid
 
             # Dynamically insert questions
@@ -1182,9 +1231,11 @@ def newRating():
 
     return render_template('addRating.html')
 
+
 def is_valid_range(range_value):
     pattern = r'^\d+(\.\d+)?-\d+(\.\d+)?$'
     return re.match(pattern, range_value)
+
 
 @app.route("/createRating", methods=["POST"])
 def createRating():
@@ -1214,13 +1265,17 @@ def createRating():
     # Open a cursor to perform database operations
     cur = mysql.connection.cursor()
     # Execute the query
-    cur.execute("INSERT INTO rating (title, range1, description1, range2, description2, range3, description3, range4, description4, range5, description5, school_id, department_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (title, range1, description1, range2, description2, range3, description3, range4, description4, range5, description5, session['school_id'], session['department_id']))
+    cur.execute(
+        "INSERT INTO rating (title, range1, description1, range2, description2, range3, description3, range4, description4, range5, description5, school_id, department_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        (title, range1, description1, range2, description2, range3, description3, range4, description4, range5,
+         description5, session['school_id'], session['department_id']))
     # Commit to the database
     mysql.connection.commit()
     # Close the cursor
     cur.close()
     flash('Successfully created a new rating system', 'success')
     return redirect('dashboard')
+
 
 @app.route("/addEvaluation")
 def addEvaluation():
@@ -1232,16 +1287,19 @@ def addEvaluation():
         return redirect(url_for('dashboard'))
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM questionnaireset WHERE school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                (session['school_id'], session['department_id']))
     sets = cur.fetchall()
     cur.execute("SELECT * FROM semester")
     semesters = cur.fetchall()
     cur.execute("SELECT * FROM schoolyear")
     years = cur.fetchall()
-    cur.execute("SELECT * FROM rating WHERE school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM rating WHERE school_id = %s and department_id = %s",
+                (session['school_id'], session['department_id']))
     ratings = cur.fetchall()
     cur.close()
-    return render_template('addEvaluationForm.html',ratings=ratings, sets=sets, semesters=semesters, years=years)
+    return render_template('addEvaluationForm.html', ratings=ratings, sets=sets, semesters=semesters, years=years)
+
 
 @app.route("/editEvaluation/<evaluationFormId>", methods=["GET", "POST"])
 def editEvaluation(evaluationFormId):
@@ -1252,26 +1310,29 @@ def editEvaluation(evaluationFormId):
         flash('Unauthorized access!', 'danger')
         return redirect(url_for('dashboard'))
 
-
     cur = mysql.connection.cursor()
-    cur.execute('SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s', (session['school_id'], session['department_id']))
+    cur.execute('SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s',
+                (session['school_id'], session['department_id']))
     questionnaireset_ids = cur.fetchall()
     if len(questionnaireset_ids) == 0:
-        questionnaireset_ids = [0,0]
+        questionnaireset_ids = [0, 0]
         questionnaireset_ids = tuple(questionnaireset_ids)
 
-    cur.execute("SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id in %s", (evaluationFormId, questionnaireset_ids))
+    cur.execute("SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id in %s",
+                (evaluationFormId, questionnaireset_ids))
     evaluationForm = cur.fetchone()
     if not evaluationForm:
         flash('Invalid evaluation form ID', 'danger')
         return redirect(url_for('dashboard'))
-    cur.execute("SELECT * FROM questionnaireset WHERE school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                (session['school_id'], session['department_id']))
     sets = cur.fetchall()
     cur.execute("SELECT * FROM semester")
     semesters = cur.fetchall()
     cur.execute("SELECT * FROM schoolyear")
     years = cur.fetchall()
-    cur.execute("SELECT * FROM rating WHERE school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM rating WHERE school_id = %s and department_id = %s",
+                (session['school_id'], session['department_id']))
     ratings = cur.fetchall()
 
     cur.close()
@@ -1294,7 +1355,8 @@ def editEvaluation(evaluationFormId):
         cur.execute("""
         UPDATE evaluationforms SET title = %s, dateStart = %s, dateEnd = %s, questionnaireset_id = %s,
         semester_id = %s, schoolyear_id = %s, rating_id = %s WHERE id = %s    
-        """, (title, date_start, date_end, questionnaireset_id, semester_id, schoolyear_id, rating_id, evaluationFormId ))
+        """, (
+        title, date_start, date_end, questionnaireset_id, semester_id, schoolyear_id, rating_id, evaluationFormId))
 
         mysql.connection.commit()
         cur.close()
@@ -1302,7 +1364,8 @@ def editEvaluation(evaluationFormId):
         flash('Successfully edited the evaluation form ' + str(evaluationForm[1]), 'success')
         return redirect(url_for('dashboard'))
     else:
-        return render_template("editEvaluation.html", sets=sets, evaluationForm=evaluationForm, ratings=ratings, years=years, semesters=semesters)
+        return render_template("editEvaluation.html", sets=sets, evaluationForm=evaluationForm, ratings=ratings,
+                               years=years, semesters=semesters)
 
 
 @app.route("/createEvaluationForm", methods=["POST"])
@@ -1396,7 +1459,8 @@ def viewEvaluation(evaluationFormId, subject, respondents):
     cur.execute(sql, val)
     schoolyear = cur.fetchone()
 
-    cur.execute("SELECT subjects.id, subjects.edpCode, subjects.title FROM subjects WHERE teacherId = %s", (session["userId"],))
+    cur.execute("SELECT subjects.id, subjects.edpCode, subjects.title FROM subjects WHERE teacherId = %s",
+                (session["userId"],))
     subjects = cur.fetchall()
 
     ratingId = evaluation_forms[7]
@@ -1462,11 +1526,11 @@ def viewEvaluation(evaluationFormId, subject, respondents):
 
     print(subject)
     # get total number of respondents
-    numofrespondents = getNumberOfRespondentsFaculty(session["userId"], subject, evaluationFormId, category, respondents)
+    numofrespondents = getNumberOfRespondentsFaculty(session["userId"], subject, evaluationFormId, category,
+                                                     respondents)
 
     # get rating records from all sections
     evalsecans = getRatingValuesFaculty(session["userId"], subject, evaluationFormId, category, respondents)
-
 
     return render_template('viewEvaluation.html', evaluationTitle=evaluationTitle,
                            section1=section1, section2=section2,
@@ -1483,15 +1547,17 @@ def viewEvaluation(evaluationFormId, subject, respondents):
                            evalsecans=evalsecans,
                            teachers=teachers,
                            subjects=subjects, rating=rating,
-                           range5Array = range5Array, range4Array = range4Array, range3Array = range3Array, range2Array = range2Array, range1Array = range1Array,
+                           range5Array=range5Array, range4Array=range4Array, range3Array=range3Array,
+                           range2Array=range2Array, range1Array=range1Array,
                            semester=semester, schoolyear=schoolyear)
 
+
 @app.route("/teachersevaluation/<teacher>/<subject>/<evaluationFormId>/<category>", methods=["POST", "GET"])
-def evaluate(teacher, subject, evaluationFormId, category): #summary
+def evaluate(teacher, subject, evaluationFormId, category):  # summary
     if 'userId' not in session:
         # If there's no user_id in the session, assume session is gone and logout
         return redirect(url_for('logout'))
-    if(session["role_id"] != 3):
+    if (session["role_id"] != 3):
         flash('Unauthorized access!', 'danger')
         return redirect(url_for('dashboard'))
 
@@ -1522,7 +1588,7 @@ def evaluate(teacher, subject, evaluationFormId, category): #summary
     questionnairesets = tuple(questionnairesets)
 
     sql = "SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id IN %s"
-    val = (evaluationFormId,questionnairesets,)
+    val = (evaluationFormId, questionnairesets,)
     cur.execute(sql, val)
     evaluation_forms = cur.fetchone()
 
@@ -1536,8 +1602,6 @@ def evaluate(teacher, subject, evaluationFormId, category): #summary
         if session['role_id'] == 3:
             flash('The selected questionnaire template has been deleted. Edit your evaluation.', 'danger')
             return redirect(url_for('editEvaluation', evaluationFormId=evaluationFormId))
-
-
 
     ratingId = evaluation_forms[7]
     if ratingId is None:
@@ -1606,7 +1670,8 @@ def evaluate(teacher, subject, evaluationFormId, category): #summary
 				(select count(question) from questionaire  where section = '4' AND questionnaireset_id = '1') as total4,
 				(select count(question) from questionaire  where section = '5' AND questionnaireset_id = '1') as total5 
 				from section 
-				right join questionaire on section.section = questionaire.section WHERE section.questionnaireset_id = %s""", (questionnaireSet_id,))
+				right join questionaire on section.section = questionaire.section WHERE section.questionnaireset_id = %s""",
+                (questionnaireSet_id,))
     sectionsleft = cur.fetchall()
     print("Length sections left: ", str(len(sectionsleft)))
     cur.execute(""" SELECT questionaire.section, questionaire.question from questionaire
@@ -1700,7 +1765,8 @@ def evaluate(teacher, subject, evaluationFormId, category): #summary
                            teachers=teachers,
                            subjects=subjects,
                            isDefault=isDefaultUrlForSummary(teacher, subject), rating=rating,
-                           range5Array = range5Array, range4Array = range4Array, range3Array = range3Array, range2Array = range2Array, range1Array = range1Array,
+                           range5Array=range5Array, range4Array=range4Array, range3Array=range3Array,
+                           range2Array=range2Array, range1Array=range1Array,
                            semester=semester, schoolyear=schoolyear
                            )
 
@@ -1725,11 +1791,11 @@ def evaluation(teacher, subject, evaluationFormId):
     questionnairesets = tuple(questionnairesets)
 
     sql = "SELECT * FROM evaluationforms WHERE dateEnd >= CURDATE() and id = %s and questionnaireset_id IN %s"
-    val = (evaluationFormId,questionnairesets,)
+    val = (evaluationFormId, questionnairesets,)
     cur.execute(sql, val)
     evaluation_forms = cur.fetchone()
 
-    #trappings
+    # trappings
     if not evaluation_forms:
         # Redirect the user back to the dashboard if there are no evaluation forms
         flash("Evaluation form invalid", "danger")
@@ -1769,7 +1835,7 @@ def evaluation(teacher, subject, evaluationFormId):
         takenAll = True
         for subject in studentSubjects:
             cur.execute("SELECT * FROM evaluation WHERE evaluationform_id = %s and idstudent = %s and subject_id = %s",
-            (evaluation_forms[0], userId, subject[2]))
+                        (evaluation_forms[0], userId, subject[2]))
             res = cur.fetchone()
             if res is None:
                 takenAll = False
@@ -1798,7 +1864,8 @@ def evaluation(teacher, subject, evaluationFormId):
             return redirect(url_for('dashboard'))
 
     if roleId == 2 or roleId == 3:
-        cur.execute("SELECT id FROM users WHERE role_id = 2 and school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+        cur.execute("SELECT id FROM users WHERE role_id = 2 and school_id = %s and department_id = %s",
+                    (session['school_id'], session['department_id']))
         teachers_id = cur.fetchall()
         if len(teachers_id) == 0:
             teachers_id = [0, 0]
@@ -1845,7 +1912,8 @@ def evaluation(teacher, subject, evaluationFormId):
     teachers = cur.fetchall()
     print(teachers)
     subjects = []
-    cur.execute("SELECT subject_id from evaluation WHERE evaluationform_id = %s and idstudent = %s", (evaluationFormId, userId,))
+    cur.execute("SELECT subject_id from evaluation WHERE evaluationform_id = %s and idstudent = %s",
+                (evaluationFormId, userId,))
     excluded_subjects = cur.fetchall()
     print(len(excluded_subjects))
     # if len(excluded_subjects) == 0:
@@ -1854,7 +1922,7 @@ def evaluation(teacher, subject, evaluationFormId):
 
     # Handle case where there are no excluded subjects
     if not excluded_subjects:
-        excluded_subjects = (0,0)
+        excluded_subjects = (0, 0)
 
     # excluded_subjects = tuple(excluded_subjects)
     print('excluded subs')
@@ -1903,7 +1971,7 @@ def evaluation(teacher, subject, evaluationFormId):
                 cur.execute(sql, val)
                 subjects = cur.fetchall()
     else:
-        if(teacher == "all"):
+        if (teacher == "all"):
             # sql = "SELECT teachers.id, teachers.firstName AS teacherFirstName, teachers.lastName AS teacherLastName FROM studentsubjects INNER JOIN users AS students ON studentsubjects.student_id = students.id INNER JOIN subjects ON studentsubjects.subject_id = subjects.id INNER JOIN users AS teachers ON subjects.teacherid = teachers.id;"
             # val = (teacher,)
             # cur.execute(sql)
@@ -1938,7 +2006,7 @@ def evaluation(teacher, subject, evaluationFormId):
             if not teacher_exist:
                 flash('Teacher ID is invalid', 'danger')
                 return redirect(url_for('dashboard'))
-            if(subject_id == "all"):
+            if (subject_id == "all"):
                 # sql = "SELECT teachers.id, teachers.firstName AS teacherFirstName, teachers.lastName AS teacherLastName FROM studentsubjects INNER JOIN users AS students ON studentsubjects.student_id = students.id INNER JOIN subjects ON studentsubjects.subject_id = subjects.id INNER JOIN users AS teachers ON subjects.teacherid = teachers.id;"
                 sql = "SELECT DISTINCT subjects.id, subjects.edpCode, subjects.title FROM studentsubjects INNER JOIN users AS students ON studentsubjects.student_id = students.id INNER JOIN subjects ON studentsubjects.subject_id = subjects.id INNER JOIN users AS teachers ON subjects.teacherid = teachers.id WHERE teachers.id = %s and subjects.id NOT IN %s and students.id = %s"
                 val = (teacher, excluded_subjects, session['userId'])
@@ -2032,7 +2100,9 @@ def evaluation(teacher, subject, evaluationFormId):
                 userId = session['userId']
                 sql = "INSERT INTO evaluation (idteacher,idstudent,subject_id,section1,section2,section3,section4,section5,pos,neu,neg,comment,sentiment,score, evaluationform_id)\
 					 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"
-                val = (teacher, userId, subject_id, sec1_string, sec2_string, sec3_string, sec4_string, sec5_string, pos_val, neu_val, neg_val, comment, sen_val, score_val, evaluationFormId,)
+                val = (
+                teacher, userId, subject_id, sec1_string, sec2_string, sec3_string, sec4_string, sec5_string, pos_val,
+                neu_val, neg_val, comment, sen_val, score_val, evaluationFormId,)
                 print(val)
                 # getting the last row id inserted in evaluation table
                 # print("success")
@@ -2053,7 +2123,8 @@ def evaluation(teacher, subject, evaluationFormId):
                 userId = session['userId']
 
                 sql = "INSERT INTO evaluation (idteacher,idstudent,subject_id,section1,section2,section3,section4,section5,evaluationform_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s);"
-                val = (teacher, userId , subject_id, sec1_string, sec2_string, sec3_string, sec4_string, sec5_string, evaluationFormId,)
+                val = (teacher, userId, subject_id, sec1_string, sec2_string, sec3_string, sec4_string, sec5_string,
+                       evaluationFormId,)
                 # getting the last row id inserted in evaluation table
                 print('walay comment')
 
@@ -2077,8 +2148,8 @@ def evaluation(teacher, subject, evaluationFormId):
             evaluation_forms = cur.fetchone()
             evaluationtitle = evaluation_forms[1]
             cur.close()
-            flash('Successfully evaluated for evaluation ' + str(evaluationtitle), 'success' )
-            return redirect("/evaluation/all/all/"+str(evaluationFormId))
+            flash('Successfully evaluated for evaluation ' + str(evaluationtitle), 'success')
+            return redirect("/evaluation/all/all/" + str(evaluationFormId))
 
         except Exception as exp:
             cur.close()
@@ -2094,8 +2165,6 @@ def evaluation(teacher, subject, evaluationFormId):
                                teachers=teachers, subjects=subjects, rating=rating, section_details=section_details)
 
 
-
-
 @app.route('/viewQuestionnaires', methods=["GET"])
 def viewQuestionnaires():
     if 'userId' not in session:
@@ -2107,7 +2176,8 @@ def viewQuestionnaires():
 
     # questionnaires = []
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM questionnaireset WHERE school_id =%s and department_id = %s", (session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM questionnaireset WHERE school_id =%s and department_id = %s",
+                (session['school_id'], session['department_id']))
     questionnaires = cur.fetchall()
     cur.close()
 
@@ -2118,6 +2188,7 @@ def viewQuestionnaires():
     #     questionnaires.append(questionnaire)
 
     return render_template('viewQuestionnaires.html', questionnaires=questionnaires)
+
 
 @app.route('/viewQuestionnaire/<questionnairesetId>', methods=["GET"])
 def viewQuestionnaire(questionnairesetId):
@@ -2132,20 +2203,17 @@ def viewQuestionnaire(questionnairesetId):
 
     cur.execute(
         "SELECT * FROM questionnaireset WHERE id = %s and school_id = %s and department_id = %s",
-        (questionnairesetId,session['school_id'], session['department_id']))
+        (questionnairesetId, session['school_id'], session['department_id']))
     questionnaire = cur.fetchone()
 
     if not questionnaire:
         flash('Invalid questionnaire', 'danger')
         return redirect(url_for('dashboard'))
 
-
-
     cur.execute(
         "SELECT * FROM section WHERE questionnaireset_id = %s",
         (questionnairesetId,))
     sections = cur.fetchall()
-
 
     cur.execute("SELECT * FROM questionaire WHERE questionnaireset_id = %s and section = 1", (questionnairesetId,))
     section1 = cur.fetchall()
@@ -2159,7 +2227,9 @@ def viewQuestionnaire(questionnairesetId):
     section5 = cur.fetchall()
     cur.close()
 
-    return render_template('viewQuestionnaire.html', questionnaire=questionnaire, section1=section1, section2=section2, section3=section3, section4=section4, section5=section5, sections=sections)
+    return render_template('viewQuestionnaire.html', questionnaire=questionnaire, section1=section1, section2=section2,
+                           section3=section3, section4=section4, section5=section5, sections=sections)
+
 
 @app.route('/deleteQuestionnaire/<questionnairesetId>', methods=["POST"])
 def deleteQuestionnaire(questionnairesetId):
@@ -2187,6 +2257,7 @@ def deleteQuestionnaire(questionnairesetId):
     flash('Questionnaire successfully deleted!', 'success')
     return redirect(url_for('viewQuestionnaires'))
 
+
 @app.route('/viewRatingSystems', methods=["GET"])
 def viewRatingSystems():
     if 'userId' not in session:
@@ -2197,11 +2268,13 @@ def viewRatingSystems():
         return redirect(url_for('dashboard'))
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM rating WHERE school_id = %s and department_id = %s", (session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM rating WHERE school_id = %s and department_id = %s",
+                (session['school_id'], session['department_id']))
     ratings = cur.fetchall()
 
     cur.close()
     return render_template('viewRatingSystems.html', ratings=ratings)
+
 
 @app.route('/viewRating/<ratingid>', methods=["GET"])
 def viewRating(ratingid):
@@ -2213,7 +2286,8 @@ def viewRating(ratingid):
         return redirect(url_for('dashboard'))
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM rating WHERE id = %s and school_id = %s and department_id = %s", (ratingid, session['school_id'], session['department_id']))
+    cur.execute("SELECT * FROM rating WHERE id = %s and school_id = %s and department_id = %s",
+                (ratingid, session['school_id'], session['department_id']))
     rating = cur.fetchone()
 
     if not rating:
@@ -2285,8 +2359,9 @@ def editSchoolDetails():
         cur.execute('SELECT id from schooldetails WHERE dean_id = %s', (userId,))
         schooldetailsid = cur.fetchone()
 
-        cur.execute('UPDATE schooldetails SET schoolName = %s, address = %s, email = %s, contactNo = %s, schoolLogo = %s WHERE id = %s',
-                    (school_name, address, email, contact_no, schoolLogo, schooldetailsid))
+        cur.execute(
+            'UPDATE schooldetails SET schoolName = %s, address = %s, email = %s, contactNo = %s, schoolLogo = %s WHERE id = %s',
+            (school_name, address, email, contact_no, schoolLogo, schooldetailsid))
         mysql.connection.commit()
         cur.close()
         flash('School details updated successfully', 'success')
@@ -2294,13 +2369,15 @@ def editSchoolDetails():
     else:
         return render_template('editSchoolDetails.html', schooldetails=schooldetails)
 
+
 @app.route('/register', methods=["POST", "GET"])
 def register():
     return render_template("register.html")
 
 
-@app.route("/generateReport/<sec1>/<sec2>/<sec3>/<sec4>/<sec5>/<comment>/<ratingPerc>/<commentPerc>/<category>/<evaluationFormId>",
-           methods=["POST", "GET"])
+@app.route(
+    "/generateReport/<sec1>/<sec2>/<sec3>/<sec4>/<sec5>/<comment>/<ratingPerc>/<commentPerc>/<category>/<evaluationFormId>",
+    methods=["POST", "GET"])
 def generateReport(sec1, sec2, sec3, sec4, sec5, comment, ratingPerc, commentPerc, category, evaluationFormId):
     if 'userId' not in session:
         # If there's no user_id in the session, assume session is gone and logout
@@ -2327,7 +2404,8 @@ def generateReport(sec1, sec2, sec3, sec4, sec5, comment, ratingPerc, commentPer
         if len(questionnairesets) == 0:
             questionnairesets = [0, 0]
         questionnairesets = tuple(questionnairesets)
-        cur.execute("SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id in %s", (evaluationFormId, questionnairesets))
+        cur.execute("SELECT * FROM evaluationforms WHERE id = %s and questionnaireset_id in %s",
+                    (evaluationFormId, questionnairesets))
         evaluationForm = cur.fetchone()
 
         if not evaluationForm:
@@ -2381,9 +2459,11 @@ def statistics():
         query = "SELECT count(*) FROM users WHERE role_id = 1"
         if department and department != 'college':
             query += f" AND department_id = {department}"
-            cur.execute("SELECT count(*) FROM users WHERE employeecategory_id = 1 and department_id = %s", (department,))
+            cur.execute("SELECT count(*) FROM users WHERE employeecategory_id = 1 and department_id = %s",
+                        (department,))
             fulltime = cur.fetchone()
-            cur.execute("SELECT count(*) FROM users WHERE employeecategory_id = 2 and department_id = %s", (department,))
+            cur.execute("SELECT count(*) FROM users WHERE employeecategory_id = 2 and department_id = %s",
+                        (department,))
             parttime = cur.fetchone()
 
             cur.execute("SELECT name from department WHERE id = %s", (department,))
@@ -2438,7 +2518,8 @@ def statistics():
 
     return render_template("adminStatistics.html", departments=departments, student_data=student_data,
                            student_labels=student_labels, respondent_data=respondent_data, school_year=school_year,
-                           semester=semester, schoolyear=schoolyear, department=department, college_department=college_department)
+                           semester=semester, schoolyear=schoolyear, department=department,
+                           college_department=college_department)
 
 
 @app.route("/updateData")
@@ -2523,7 +2604,6 @@ def updateData():
     return redirect(url_for('advancedEvaluationStatistics'))
 
 
-
 @app.route('/decision_tree_report')
 def decision_tree_report():
     if 'userId' not in session:
@@ -2537,6 +2617,7 @@ def decision_tree_report():
 
     return render_template('decision_tree_report.html', report=report)
 
+
 @app.route('/logistic_regression_report')
 def logistic_regression_report():
     if 'userId' not in session:
@@ -2549,6 +2630,7 @@ def logistic_regression_report():
     report = joblib.load('logistic_regression_report.pkl')
 
     return render_template('logistic_regression_report.html', report=report)
+
 
 @app.route('/predict_sentiment', methods=['POST'])
 def predict_sentiment():
@@ -2608,11 +2690,13 @@ def predict_probability():
     # Format probabilities to percentage
     formatted_probabilities = [f'{prob:.2%}' for prob in probabilities]
 
-    probability_str = ", ".join([f'{label_encoder.inverse_transform([i])[0]}: {formatted_probabilities[i]}' for i in range(len(formatted_probabilities))])
+    probability_str = ", ".join([f'{label_encoder.inverse_transform([i])[0]}: {formatted_probabilities[i]}' for i in
+                                 range(len(formatted_probabilities))])
 
     # Display the result
     flash(f'Predicted Sentiment: {predicted_sentiment} with probabilities {probability_str}', 'success')
     return redirect(url_for('advancedEvaluationStatistics'))
+
 
 @app.route('/advancedStatistics')
 def advancedEvaluationStatistics():
@@ -2671,10 +2755,11 @@ def advancedEvaluationStatistics():
     cur.execute("SELECT avg(score) FROM evaluation WHERE evaluationForm_id in %s", (ftf_evaluation_forms,))
     ftf_sentiment_proportions = cur.fetchone()[0]
 
-
     cur.close()
-    return render_template("advancedStatistics.html", pt_ft_data=pt_ft_data, online_sentiment_proportions=online_sentiment_proportions,
-                           ftf_sentiment_proportions=ftf_sentiment_proportions, online_ftf_data=online_ftf_data, logistic_regression_results=logistic_regression_results)
+    return render_template("advancedStatistics.html", pt_ft_data=pt_ft_data,
+                           online_sentiment_proportions=online_sentiment_proportions,
+                           ftf_sentiment_proportions=ftf_sentiment_proportions, online_ftf_data=online_ftf_data,
+                           logistic_regression_results=logistic_regression_results)
 
 
 @app.route("/deans")
@@ -2751,6 +2836,7 @@ def change_dean(department_id):
 
     flash('Dean changed successfully.', 'success')
     return redirect(url_for('deans'))
+
 
 @app.route('/add_dean/<int:department_id>', methods=["POST"])
 def add_dean(department_id):
@@ -2835,9 +2921,10 @@ def getNumberOfRespondents(teacher, subject, evaluationFormId, category):
         cur.execute("SELECT id FROM users WHERE employeecategory_id = %s", (category,))
         valid_teacher_ids = cur.fetchall()
         if len(valid_teacher_ids) == 0:
-            valid_teacher_ids = [0,0]
+            valid_teacher_ids = [0, 0]
             valid_teacher_ids = tuple(valid_teacher_ids)
-        cur.execute("SELECT count(*) from evaluation WHERE evaluationform_id = %s and idteacher in %s", (evaluationFormId, valid_teacher_ids,))
+        cur.execute("SELECT count(*) from evaluation WHERE evaluationform_id = %s and idteacher in %s",
+                    (evaluationFormId, valid_teacher_ids,))
         result = cur.fetchall()
         return result[0][0]
 
@@ -2859,11 +2946,12 @@ def getNumberOfRespondents(teacher, subject, evaluationFormId, category):
         # if a teacher is selected, and a subject is selected (teacher + subject)
         elif ((teacher != "0" or teacher != "all") and (subject != "0" or subject != "all")):
             sql = "SELECT count(*) from evaluation WHERE evaluation.idTeacher = %s and evaluation.subject_id = %s and evaluationform_id = %s"
-            val = (teacher, subject,evaluationFormId,)
+            val = (teacher, subject, evaluationFormId,)
 
         cur.execute(sql, val)
         result = cur.fetchall()
         return result[0][0]
+
 
 def getNumberOfRespondentsFaculty(teacher, subject, evaluationFormId, category, respondents):
     cur = mysql.connection.cursor()
@@ -2902,7 +2990,7 @@ def getNumberOfRespondentsFaculty(teacher, subject, evaluationFormId, category, 
         elif ((teacher != "0" or teacher != "all") and (subject != "0" or subject != "all")):
             if respondents == "all":
                 sql = "SELECT count(*) from evaluation WHERE evaluation.idTeacher = %s and evaluation.subject_id = %s and evaluationform_id = %s"
-                val = (teacher, subject,evaluationFormId,)
+                val = (teacher, subject, evaluationFormId,)
             elif respondents == "1":
                 cur.execute("SELECT id FROM users WHERE department_id = %s and role_id = 1",
                             (session['department_id'],))
@@ -2954,7 +3042,8 @@ def getSentimentValuesFaculty(teacher, subject, evaluationFormId, category, resp
                 sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.idteacher = %s and evaluation.evaluationform_id = %s"
                 val = (teacher, evaluationFormId,)
             elif respondents == "1":
-                cur.execute("SELECT id FROM users WHERE department_id = %s and role_id = 1", (session['department_id'],))
+                cur.execute("SELECT id FROM users WHERE department_id = %s and role_id = 1",
+                            (session['department_id'],))
                 students_id = cur.fetchall()
                 sql = "SELECT evaluation.comment,"
                 sql += "csentiment.positive_value,"
@@ -2989,7 +3078,7 @@ def getSentimentValuesFaculty(teacher, subject, evaluationFormId, category, resp
                 sql += "csentiment.score "
                 sql += "from evaluation INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
                 sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.idteacher = %s and evaluation.subject_id = %s and evaluation.evaluationform_id = %s"
-                #sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and idteacher = %s and edpCode = %s"
+                # sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and idteacher = %s and edpCode = %s"
                 val = (teacher, subject, evaluationFormId,)
             elif respondents == "1":
                 cur.execute("SELECT id FROM users WHERE department_id = %s and role_id = 1",
@@ -3029,11 +3118,12 @@ def getSentimentValuesFaculty(teacher, subject, evaluationFormId, category, resp
             sql += "csentiment.score "
             sql += "from evaluation INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
             sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.subject_id = %s and evaluation.evaluationform_id = %s"
-            #sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and edpCode = %s"
+            # sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and edpCode = %s"
             val = (subject, evaluationFormId,)
 
         cur.execute(sql, val)
         return cur.fetchall()
+
 
 def getRatingValuesFaculty(teacher, subject, evaluationFormId, category, respondents):
     cur = mysql.connection.cursor()
@@ -3043,7 +3133,8 @@ def getRatingValuesFaculty(teacher, subject, evaluationFormId, category, respond
         return redirect(url_for('dashboard'))
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
         cur.execute(
-            "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE evaluationform_id = %s) as totalnum from evaluation WHERE evaluationForm_id = %s", (evaluationFormId,evaluationFormId,))
+            "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE evaluationform_id = %s) as totalnum from evaluation WHERE evaluationForm_id = %s",
+            (evaluationFormId, evaluationFormId,))
         return cur.fetchall()
     # if not default
     else:
@@ -3051,7 +3142,7 @@ def getRatingValuesFaculty(teacher, subject, evaluationFormId, category, respond
         if ((teacher != "0" and teacher != "all") and (subject == "0" or subject == "all")):
             if respondents == "all":
                 sql = "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE idteacher = %s and evaluationform_id = %s) as totalnum from evaluation WHERE idteacher = %s and evaluationForm_id = %s"
-                val = (teacher, evaluationFormId,teacher,evaluationFormId,)
+                val = (teacher, evaluationFormId, teacher, evaluationFormId,)
             elif respondents == "1":
                 cur.execute("SELECT id FROM users WHERE department_id = %s and role_id = 1",
                             (session['department_id'],))
@@ -3089,6 +3180,7 @@ def getRatingValuesFaculty(teacher, subject, evaluationFormId, category, respond
         cur.execute(sql, val)
         return cur.fetchall()
 
+
 # get comment,pos,neg,neu
 def getSentimentValues(teacher, subject, evaluationFormId, category):
     cur = mysql.connection.cursor()
@@ -3108,7 +3200,7 @@ def getSentimentValues(teacher, subject, evaluationFormId, category):
         sql += "csentiment.score "
         sql += "from evaluation INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
         sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.evaluationform_id = %s and evaluation.idteacher in %s"
-        cur.execute(sql, (evaluationFormId,valid_teacher_ids))
+        cur.execute(sql, (evaluationFormId, valid_teacher_ids))
         return cur.fetchall()
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
         sql = "SELECT evaluation.comment,"
@@ -3144,7 +3236,7 @@ def getSentimentValues(teacher, subject, evaluationFormId, category):
             sql += "csentiment.score "
             sql += "from evaluation INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
             sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.idteacher = %s and evaluation.subject_id = %s and evaluation.evaluationform_id = %s"
-            #sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and idteacher = %s and edpCode = %s"
+            # sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and idteacher = %s and edpCode = %s"
             val = (teacher, subject, evaluationFormId,)
         # else (if there is no teacher selected and a subject is selected)
         else:
@@ -3156,7 +3248,7 @@ def getSentimentValues(teacher, subject, evaluationFormId, category):
             sql += "csentiment.score "
             sql += "from evaluation INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
             sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.subject_id = %s and evaluation.evaluationform_id = %s"
-            #sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and edpCode = %s"
+            # sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and edpCode = %s"
             val = (subject, evaluationFormId,)
 
         cur.execute(sql, val)
@@ -3171,7 +3263,7 @@ def getRatingValues(teacher, subject, evaluationFormId, category):
         cur.execute("SELECT id FROM users WHERE employeecategory_id = %s", (category,))
         valid_teacher_ids = cur.fetchall()
         if len(valid_teacher_ids) == 0:
-            valid_teacher_ids = [0,0]
+            valid_teacher_ids = [0, 0]
             valid_teacher_ids = tuple(valid_teacher_ids)
         cur.execute(
             "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE evaluationform_id = %s and idteacher in %s) as totalnum from evaluation WHERE evaluationForm_id = %s and idteacher in %s",
@@ -3181,14 +3273,15 @@ def getRatingValues(teacher, subject, evaluationFormId, category):
     # if no teacher is selected, and no subject select (no filter)
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
         cur.execute(
-            "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE evaluationform_id = %s) as totalnum from evaluation WHERE evaluationForm_id = %s", (evaluationFormId,evaluationFormId,))
+            "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE evaluationform_id = %s) as totalnum from evaluation WHERE evaluationForm_id = %s",
+            (evaluationFormId, evaluationFormId,))
         return cur.fetchall()
     # if not default
     else:
         # if a teacher is selected, but no subject is selected (teacher + all subjects)
         if ((teacher != "0" and teacher != "all") and (subject == "0" or subject == "all")):
             sql = "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE idteacher = %s and evaluationform_id = %s) as totalnum from evaluation WHERE idteacher = %s and evaluationForm_id = %s"
-            val = (teacher, evaluationFormId,teacher,evaluationFormId,)
+            val = (teacher, evaluationFormId, teacher, evaluationFormId,)
         # if a teacher is selected, and a subject is selected (teacher + subject)
         elif ((teacher != "0" and teacher != "all") and (subject != "0" or subject != "all")):
             sql = "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE idteacher = %s and subject_id = %s and evaluationform_id = %s) as totalnum from evaluation WHERE idteacher = %s and subject_id = %s and evaluationForm_id = %s"
@@ -3212,10 +3305,11 @@ def getPositiveAverage(category):
     # if default
     if category != 'all':
         print("CATEGORY ID: ", category)
-        cur.execute("SELECT id FROM users WHERE employeecategory_id = %s and department_id = %s", (category, session["department_id"]))
+        cur.execute("SELECT id FROM users WHERE employeecategory_id = %s and department_id = %s",
+                    (category, session["department_id"]))
         valid_teacher_ids = cur.fetchall()
         if len(valid_teacher_ids) == 0:
-            valid_teacher_ids = [0,0]
+            valid_teacher_ids = [0, 0]
             valid_teacher_ids = tuple(valid_teacher_ids)
         cur.execute(
             "SELECT AVG(positive_value), evaluation.idteacher "
@@ -3242,7 +3336,9 @@ def getPositiveAverage(category):
         return posAverage
     # if no teacher is selected, and no subject select (no filter)
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
-        cur.execute("SELECT AVG(positive_value) from csentiment WHERE score IS NOT NULL and csentiment.evaluationform_id = %s", (evaluationFormId,))
+        cur.execute(
+            "SELECT AVG(positive_value) from csentiment WHERE score IS NOT NULL and csentiment.evaluationform_id = %s",
+            (evaluationFormId,))
         posAve = cur.fetchall()[0]
         return posAve
     # if not default
@@ -3260,7 +3356,7 @@ def getPositiveAverage(category):
             sql += "from csentiment INNER JOIN evaluation ON "
             sql += "csentiment.evaluationId = evaluation.id "
             sql += "where evaluation.idteacher = %s and evaluation.subject_id = %s and csentiment.score IS NOT NULL and csentiment.evaluationform_id = %s"
-            #sql = "SELECT AVG(pos) from evaluation where idteacher = %s and edpCode = %s and score IS NOT NULL "
+            # sql = "SELECT AVG(pos) from evaluation where idteacher = %s and edpCode = %s and score IS NOT NULL "
             val = (teacher, subject, evaluationFormId,)
         # else (if there is no teacher selected and a subject is selected)
         else:
@@ -3268,7 +3364,7 @@ def getPositiveAverage(category):
             sql += "from csentiment INNER JOIN evaluation ON "
             sql += "csentiment.evaluationId = evaluation.id "
             sql += "where evaluation.subject_id = %s and csentiment.score IS NOT NULL and csentiment.evaluationform_id = %s"
-            #sql = "SELECT AVG(pos) from evaluation where edpCode = %s and score IS NOT NULL "
+            # sql = "SELECT AVG(pos) from evaluation where edpCode = %s and score IS NOT NULL "
             val = (subject, evaluationFormId)
 
         cur.execute(sql, val)
@@ -3286,10 +3382,11 @@ def getNegativeAverage(category):
     # if default
     if category != 'all':
         print("CATEGORY ID: ", category)
-        cur.execute("SELECT id FROM users WHERE employeecategory_id = %s and department_id = %s", (category, session["department_id"]))
+        cur.execute("SELECT id FROM users WHERE employeecategory_id = %s and department_id = %s",
+                    (category, session["department_id"]))
         valid_teacher_ids = cur.fetchall()
         if len(valid_teacher_ids) == 0:
-            valid_teacher_ids = [0,0]
+            valid_teacher_ids = [0, 0]
             valid_teacher_ids = tuple(valid_teacher_ids)
         cur.execute(
             "SELECT AVG(negative_value), evaluation.idteacher "
@@ -3316,7 +3413,9 @@ def getNegativeAverage(category):
 
     # if no teacher is selected, and no subject select (no filter)
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
-        cur.execute("SELECT AVG(csentiment.negative_value) from csentiment WHERE score IS NOT NULL and csentiment.evaluationform_id = %s", (evaluationFormId,))
+        cur.execute(
+            "SELECT AVG(csentiment.negative_value) from csentiment WHERE score IS NOT NULL and csentiment.evaluationform_id = %s",
+            (evaluationFormId,))
         posAve = cur.fetchall()[0]
         return posAve
     # if not default
@@ -3334,7 +3433,7 @@ def getNegativeAverage(category):
             sql += "from csentiment INNER JOIN evaluation ON "
             sql += "csentiment.evaluationId = evaluation.id "
             sql += "where evaluation.idteacher = %s and evaluation.subject_id = %s and csentiment.score IS NOT NULL and csentiment.evaluationform_id = %s"
-            #sql = "SELECT AVG(pos) from evaluation where idteacher = %s and edpCode = %s and score IS NOT NULL "
+            # sql = "SELECT AVG(pos) from evaluation where idteacher = %s and edpCode = %s and score IS NOT NULL "
             val = (teacher, subject, evaluationFormId,)
         # else (if there is no teacher selected and a subject is selected)
         else:
@@ -3342,7 +3441,7 @@ def getNegativeAverage(category):
             sql += "from csentiment INNER JOIN evaluation ON "
             sql += "csentiment.evaluationId = evaluation.id "
             sql += "where evaluation.subject_id = %s and csentiment.score IS NOT NULL and csentiment.evaluationform_id = %s"
-            #sql = "SELECT AVG(pos) from evaluation where edpCode = %s and score IS NOT NULL "
+            # sql = "SELECT AVG(pos) from evaluation where edpCode = %s and score IS NOT NULL "
             val = (subject, evaluationFormId,)
 
         cur.execute(sql, val)
@@ -3360,10 +3459,11 @@ def getNeutralAverage(category):
     # if default
     if category != 'all':
         print("CATEGORY ID: ", category)
-        cur.execute("SELECT id FROM users WHERE employeecategory_id = %s and department_id = %s", (category, session["department_id"]))
+        cur.execute("SELECT id FROM users WHERE employeecategory_id = %s and department_id = %s",
+                    (category, session["department_id"]))
         valid_teacher_ids = cur.fetchall()
         if len(valid_teacher_ids) == 0:
-            valid_teacher_ids = [0,0]
+            valid_teacher_ids = [0, 0]
             valid_teacher_ids = tuple(valid_teacher_ids)
         cur.execute(
             "SELECT AVG(neutral_value), evaluation.idteacher "
@@ -3391,7 +3491,9 @@ def getNeutralAverage(category):
 
     # if no teacher is selected, and no subject select (no filter)
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
-        cur.execute("SELECT AVG(csentiment.neutral_value) from csentiment WHERE score IS NOT NULL and csentiment.evaluationform_id = %s", (evaluationFormId,))
+        cur.execute(
+            "SELECT AVG(csentiment.neutral_value) from csentiment WHERE score IS NOT NULL and csentiment.evaluationform_id = %s",
+            (evaluationFormId,))
         posAve = cur.fetchall()[0]
         return posAve
     # if not default
@@ -3409,7 +3511,7 @@ def getNeutralAverage(category):
             sql += "from csentiment INNER JOIN evaluation ON "
             sql += "csentiment.evaluationId = evaluation.id "
             sql += "where evaluation.idteacher = %s and evaluation.subject_id = %s and csentiment.score IS NOT NULL  and csentiment.evaluationform_id = %s"
-            #sql = "SELECT AVG(pos) from evaluation where idteacher = %s and edpCode = %s and score IS NOT NULL "
+            # sql = "SELECT AVG(pos) from evaluation where idteacher = %s and edpCode = %s and score IS NOT NULL "
             val = (teacher, subject, evaluationFormId,)
         # else (if there is no teacher selected and a subject is selected)
         else:
@@ -3417,7 +3519,7 @@ def getNeutralAverage(category):
             sql += "from csentiment INNER JOIN evaluation ON "
             sql += "csentiment.evaluationId = evaluation.id "
             sql += "where evaluation.subject_id = %s and csentiment.score IS NOT NULL and csentiment.evaluationform_id = %s"
-            #sql = "SELECT AVG(pos) from evaluation where edpCode = %s and score IS NOT NULL "
+            # sql = "SELECT AVG(pos) from evaluation where edpCode = %s and score IS NOT NULL "
             val = (subject, evaluationFormId)
 
     cur.execute(sql, val)
@@ -3432,8 +3534,8 @@ def getNeutralAverage(category):
 with app.app_context():
     def getsentiment(comment):
         dictToSend = {'comment': comment}
-        res = requests.post('http://127.0.0.1:8000/getSentiment', json=dictToSend)
-        #res = requests.post('https://csentiment-api.herokuapp.com/getSentiment', json=dictToSend)
+        res = requests.post('http://ccsteachersevaluation-api.de.r.appspot.com/getSentiment', json=dictToSend)
+        # res = requests.post('https://csentiment-api.herokuapp.com/getSentiment', json=dictToSend)
         print('response from server:', res.text)
         print(f'Status Code: {res.status_code}')
         print(f'Response: {res.json()}')
@@ -3441,7 +3543,8 @@ with app.app_context():
         return str(dictFromServer)
 
 with app.app_context():
-    def printReport(sec1, sec2, sec3, sec4, sec5, comment, posAve, negAve, neuAve, ratingPerc, commentPerc, schooldetails, department, esignature, evaluationForm):
+    def printReport(sec1, sec2, sec3, sec4, sec5, comment, posAve, negAve, neuAve, ratingPerc, commentPerc,
+                    schooldetails, department, esignature, evaluationForm):
         import requests
         evaluationFormId = G_EVALUATION_FORM_ID
         cur = mysql.connection.cursor()
@@ -3464,7 +3567,8 @@ with app.app_context():
         cur.execute("SELECT * FROM schoolyear WHERE id = %s", (schoolyearId,))
         schoolyear = cur.fetchone()
 
-        cur.execute("SELECT percentage FROM section WHERE section = 1 and questionnaireset_id = %s", (questionnairesetId,))
+        cur.execute("SELECT percentage FROM section WHERE section = 1 and questionnaireset_id = %s",
+                    (questionnairesetId,))
         sec1Percentage = cur.fetchone()
 
         cur.execute("SELECT percentage FROM section WHERE section = 2 and questionnaireset_id = %s",
@@ -3549,8 +3653,9 @@ with app.app_context():
 
         }
         cur.close()
-        resp = requests.post('http://127.0.0.1:8000/reportGeneration', json=test, stream=True)
-        #resp = requests.post('https://csentimentapi.herokuapp.com/reportGeneration', json=data, stream=True)
+        resp = requests.post('http://ccsteachersevaluation-api.de.r.appspot.com/reportGeneration', json=test,
+                             stream=True)
+        # resp = requests.post('https://csentimentapi.herokuapp.com/reportGeneration', json=data, stream=True)
         return resp.raw.read(), resp.status_code, resp.headers.items()
 
 if __name__ == "__main__":
