@@ -185,7 +185,7 @@ def dashboard():
             questionnairesets = [0, 0]
         questionnairesets = tuple(questionnairesets)
 
-    sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s"
+    sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and dateEnd >= CURDATE()"
     cur.execute(sql, (questionnairesets,))
     evaluationsAll = cur.fetchall()
     evaluations = []
@@ -220,7 +220,7 @@ def dashboard():
         if len(questionnairesets) == 0:
             questionnairesets = (0, 0)
         print(type(questionnairesets))
-        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s"
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and dateEnd >= CURDATE()"
         cur.execute(sql, (questionnairesets,))
         evaluationsAll = cur.fetchall()
         evaluations = []
@@ -257,7 +257,7 @@ def dashboard():
         if len(questionnairesets) == 0:
             questionnairesets = (0, 0)
         print(type(questionnairesets))
-        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s"
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and dateEnd >= CURDATE()"
         cur.execute(sql, (questionnairesets,))
         evaluationsAll = cur.fetchall()
         evaluations = []
@@ -321,7 +321,7 @@ def dashboard():
                 questionnairesets = [0, 0]
             questionnairesets = tuple(questionnairesets)
 
-        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s and dateEnd >= CURDATE()"
         cur.execute(sql, (questionnairesets, semester, school_year))
         evaluationsAll = cur.fetchall()
         evaluations = []
@@ -356,7 +356,7 @@ def dashboard():
                 questionnairesets = (0, 0)
             print(type(questionnairesets))
             print(semester, school_year)
-            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
+            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s and dateEnd >= CURDATE()"
             cur.execute(sql, (questionnairesets, semester, school_year))
             evaluationsAll = cur.fetchall()
             evaluations = []
@@ -393,7 +393,7 @@ def dashboard():
             if len(questionnairesets) == 0:
                 questionnairesets = (0, 0)
             print(type(questionnairesets))
-            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
+            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s and dateEnd >= CURDATE()"
             cur.execute(sql, (questionnairesets, semester, school_year))
             evaluationsAll = cur.fetchall()
             evaluations = []
@@ -431,6 +431,293 @@ def dashboard():
                                categoryName=category_name)
     else:
         return render_template("dashboard.html", school_year=school_year, semester=semester, schoolyear=schoolyear,
+                               doneEvaluations=doneEvaluations, departments=college_departments,
+                               evaluations=evaluations, firstName=firstName, roleName=roleName,
+                               categoryName=category_name)
+
+
+@app.route('/archives', methods=['GET', 'POST'])
+def archives():
+    if 'userId' not in session:
+        # If there's no user_id in the session, assume session is gone and logout
+        return redirect(url_for('logout'))
+    category_name = None
+    userId = session["userId"]
+    roleId = session["role_id"]
+
+    cur = mysql.connection.cursor()
+    sql = "SELECT firstName FROM users WHERE id = %s"
+    val = (session['userId'],)
+    cur.execute(sql, val)
+    firstName = cur.fetchall()
+    sql = "SELECT roles.roleName FROM roles JOIN users ON users.role_id=roles.id WHERE users.id = %s"
+    val = (session['userId'],)
+    cur.execute(sql, val)
+    roleName = cur.fetchall()
+
+    cur.execute("SELECT * FROM department WHERE id <> 2 and id <> 3")
+    college_departments = cur.fetchall()
+
+    if roleName[0][0] != "SUPER ADMIN":
+        cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                    (session['school_id'], session['department_id']))
+        questionnairesets = cur.fetchall()
+        if len(questionnairesets) == 0:
+            questionnairesets = [0, 0]
+        questionnairesets = tuple(questionnairesets)
+    else:
+        cur.execute("SELECT id FROM questionnaireset")
+        questionnairesets = cur.fetchall()
+        if len(questionnairesets) == 0:
+            questionnairesets = [0, 0]
+        questionnairesets = tuple(questionnairesets)
+
+    sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and dateEnd <= CURDATE()"
+    cur.execute(sql, (questionnairesets,))
+    evaluationsAll = cur.fetchall()
+    evaluations = []
+    doneEvaluations = []
+    for evaluation in evaluationsAll:
+        cur.execute("SELECT * FROM studentsubjects WHERE student_id = %s", (userId,))
+        studentSubjects = cur.fetchall()
+        takenAll = True
+        for subject in studentSubjects:
+            cur.execute("SELECT * FROM evaluation WHERE evaluationform_id = %s and idstudent = %s and subject_id = %s",
+                        (evaluation[0], userId, subject[2]))
+            res = cur.fetchone()
+            if res is None:
+                takenAll = False
+                break
+
+        if not takenAll:
+            evaluations.append(evaluation)
+
+        if takenAll:
+            doneEvaluations.append(evaluation)
+
+    # print(len(evaluations))
+    print("done", doneEvaluations)
+    cur.execute("SELECT * FROM schoolyear")
+    schoolyear = cur.fetchall()
+
+    if roleId == 3:
+        cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                    (session['school_id'], session['department_id']))
+        questionnairesets = cur.fetchall()
+        if len(questionnairesets) == 0:
+            questionnairesets = (0, 0)
+        print(type(questionnairesets))
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and dateEnd <= CURDATE() "
+        cur.execute(sql, (questionnairesets,))
+        evaluationsAll = cur.fetchall()
+        evaluations = []
+        for evaluation in evaluationsAll:
+            cur.execute("SELECT id FROM users WHERE school_id = %s and department_id = %s",
+                        (session['school_id'], session['department_id']))
+            teachers_id = cur.fetchall()
+            if len(teachers_id) == 0:
+                teachers_id = [0, 0]
+                teachers_id = tuple(teachers_id)
+
+            cur.execute("SELECT * FROM subjects WHERE teacherId in %s", (teachers_id,))
+            subjects = cur.fetchall()
+            takenAll = True
+            for subject in subjects:
+                cur.execute(
+                    "SELECT * FROM evaluation WHERE evaluationform_id = %s and idstudent = %s and subject_id = %s",
+                    (evaluation[0], userId, subject[0]))
+                res = cur.fetchone()
+                if res is None:
+                    takenAll = False
+                    break
+            evaluation = list(evaluation)
+            if not takenAll:
+                evaluation.append("NOT")
+            else:
+                evaluation.append("TAKEN")
+            evaluations.append(evaluation)
+        # evaluations = evaluationsAll
+    elif roleId == 2:
+        cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                    (session['school_id'], session['department_id']))
+        questionnairesets = cur.fetchall()
+        if len(questionnairesets) == 0:
+            questionnairesets = (0, 0)
+        print(type(questionnairesets))
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and dateEnd <= CURDATE()"
+        cur.execute(sql, (questionnairesets,))
+        evaluationsAll = cur.fetchall()
+        evaluations = []
+        for evaluation in evaluationsAll:
+            cur.execute("SELECT * FROM subjects")
+            subjects = cur.fetchall()
+            takenAll = True
+            for subject in subjects:
+                cur.execute(
+                    "SELECT * FROM evaluation WHERE evaluationform_id = %s and idstudent = %s and subject_id = %s",
+                    (evaluation[0], userId, subject[0]))
+                res = cur.fetchone()
+                if res is None:
+                    takenAll = False
+                    break
+            evaluation = list(evaluation)
+            if not takenAll:
+                evaluations.append(evaluation)
+        # evaluations = evaluationsAll
+        # employee_category_id = G_CATEGORY_EMPLOYEE_ID
+        cur.execute("SELECT * FROM users where id = %s", (userId,))
+        user = cur.fetchone()
+        print(user)
+        category_id = user[8]
+        cur.execute("SELECT * FROM employeecategory WHERE id = %s", (category_id,))
+        category = cur.fetchone()
+        category_name = category[1]
+
+    print(evaluations)
+    cur.close()
+    school_year = 1
+    semester = 1
+
+    if request.method == "POST":
+        school_year = request.form.get('schoolYear')
+        semester = request.form.get('semester')
+        department = request.form.get('department')
+        college_department = request.form.get('collegeDepartment', None)  # Only available if department is college
+        cur = mysql.connection.cursor()
+
+        departmentName = department
+
+        cur.execute("SELECT * FROM department WHERE id <> 2 and id <> 3")
+        college_departments = cur.fetchall()
+
+        if roleName[0][0] != "SUPER ADMIN":
+            cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                        (session['school_id'], session['department_id']))
+            questionnairesets = cur.fetchall()
+            if len(questionnairesets) == 0:
+                questionnairesets = [0, 0]
+            questionnairesets = tuple(questionnairesets)
+        else:
+            if department == "college":
+                departmentName = department
+                department = college_department
+            cur.execute("SELECT id FROM questionnaireset WHERE department_id = %s",
+                        (department,))
+            questionnairesets = cur.fetchall()
+            if len(questionnairesets) == 0:
+                questionnairesets = [0, 0]
+            questionnairesets = tuple(questionnairesets)
+
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s and dateEnd <= CURDATE()"
+        cur.execute(sql, (questionnairesets, semester, school_year))
+        evaluationsAll = cur.fetchall()
+        evaluations = []
+        doneEvaluations = []
+        for evaluation in evaluationsAll:
+            cur.execute("SELECT * FROM studentsubjects WHERE student_id = %s", (userId,))
+            studentSubjects = cur.fetchall()
+            takenAll = True
+            for subject in studentSubjects:
+                cur.execute(
+                    "SELECT * FROM evaluation WHERE evaluationform_id = %s and idstudent = %s and subject_id = %s",
+                    (evaluation[0], userId, subject[2]))
+                res = cur.fetchone()
+                if res is None:
+                    takenAll = False
+                    break
+
+            if not takenAll:
+                evaluations.append(evaluation)
+
+            if takenAll:
+                doneEvaluations.append(evaluation)
+
+        # print(len(evaluations))
+        print("done", doneEvaluations)
+
+        if roleId == 3:
+            cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                        (session['school_id'], session['department_id']))
+            questionnairesets = cur.fetchall()
+            if len(questionnairesets) == 0:
+                questionnairesets = (0, 0)
+            print(type(questionnairesets))
+            print(semester, school_year)
+            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s and dateEnd <= CURDATE()"
+            cur.execute(sql, (questionnairesets, semester, school_year))
+            evaluationsAll = cur.fetchall()
+            evaluations = []
+            for evaluation in evaluationsAll:
+                cur.execute("SELECT id FROM users WHERE school_id = %s and department_id = %s",
+                            (session['school_id'], session['department_id']))
+                teachers_id = cur.fetchall()
+                if len(teachers_id) == 0:
+                    teachers_id = [0, 0]
+                    teachers_id = tuple(teachers_id)
+
+                cur.execute("SELECT * FROM subjects WHERE teacherId in %s", (teachers_id,))
+                subjects = cur.fetchall()
+                takenAll = True
+                for subject in subjects:
+                    cur.execute(
+                        "SELECT * FROM evaluation WHERE evaluationform_id = %s and idstudent = %s and subject_id = %s",
+                        (evaluation[0], userId, subject[0]))
+                    res = cur.fetchone()
+                    if res is None:
+                        takenAll = False
+                        break
+                evaluation = list(evaluation)
+                if not takenAll:
+                    evaluation.append("NOT")
+                else:
+                    evaluation.append("TAKEN")
+                evaluations.append(evaluation)
+            # evaluations = evaluationsAll
+        elif roleId == 2:
+            cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
+                        (session['school_id'], session['department_id']))
+            questionnairesets = cur.fetchall()
+            if len(questionnairesets) == 0:
+                questionnairesets = (0, 0)
+            print(type(questionnairesets))
+            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s and dateEnd <= CURDATE()"
+            cur.execute(sql, (questionnairesets, semester, school_year))
+            evaluationsAll = cur.fetchall()
+            evaluations = []
+            for evaluation in evaluationsAll:
+                cur.execute("SELECT * FROM subjects")
+                subjects = cur.fetchall()
+                takenAll = True
+                for subject in subjects:
+                    cur.execute(
+                        "SELECT * FROM evaluation WHERE evaluationform_id = %s and idstudent = %s and subject_id = %s",
+                        (evaluation[0], userId, subject[0]))
+                    res = cur.fetchone()
+                    if res is None:
+                        takenAll = False
+                        break
+                evaluation = list(evaluation)
+                if not takenAll:
+                    evaluations.append(evaluation)
+            # evaluations = evaluationsAll
+            # employee_category_id = G_CATEGORY_EMPLOYEE_ID
+            cur.execute("SELECT * FROM users where id = %s", (userId,))
+            user = cur.fetchone()
+            print(user)
+            category_id = user[8]
+            cur.execute("SELECT * FROM employeecategory WHERE id = %s", (category_id,))
+            category = cur.fetchone()
+            category_name = category[1]
+
+        print(evaluations)
+        cur.close()
+        return render_template("archives.html", departmentId=college_department, department=departmentName,
+                               school_year=school_year, semester=semester, schoolyear=schoolyear,
+                               doneEvaluations=doneEvaluations, departments=college_departments,
+                               evaluations=evaluations, firstName=firstName, roleName=roleName,
+                               categoryName=category_name)
+    else:
+        return render_template("archives.html", school_year=school_year, semester=semester, schoolyear=schoolyear,
                                doneEvaluations=doneEvaluations, departments=college_departments,
                                evaluations=evaluations, firstName=firstName, roleName=roleName,
                                categoryName=category_name)
@@ -3534,8 +3821,8 @@ def getNeutralAverage(category):
 with app.app_context():
     def getsentiment(comment):
         dictToSend = {'comment': comment}
-        res = requests.post('http://ccsteachersevaluation-api.de.r.appspot.com/getSentiment', json=dictToSend)
-        # res = requests.post('https://csentiment-api.herokuapp.com/getSentiment', json=dictToSend)
+        # res = requests.post('http://ccsteachersevaluation-api.de.r.appspot.com/getSentiment', json=dictToSend)
+        res = requests.post('http://127.0.0.1:8000/getSentiment', json=dictToSend)
         print('response from server:', res.text)
         print(f'Status Code: {res.status_code}')
         print(f'Response: {res.json()}')
@@ -3653,12 +3940,15 @@ with app.app_context():
 
         }
         cur.close()
-        resp = requests.post('http://ccsteachersevaluation-api.de.r.appspot.com/reportGeneration', json=test,
+        # resp = requests.post('http://ccsteachersevaluation-api.de.r.appspot.com/reportGeneration', json=test,
+        #                      stream=True)
+
+        resp = requests.post('http://127.0.0.1:8000/reportGeneration', json=test,
                              stream=True)
         # resp = requests.post('https://csentimentapi.herokuapp.com/reportGeneration', json=data, stream=True)
         return resp.raw.read(), resp.status_code, resp.headers.items()
 
 if __name__ == "__main__":
-    # app.run(debug=True)
-    # app.run(host='127.0.0.1', port=5000, debug=True)
+    app.run(debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)
     app.run()

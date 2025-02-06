@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %} Dashboard - CSentiment {% endblock %}
+{% block title %} Archives - CSentiment {% endblock %}
 
 {% block content %}
+
+
 <div class="container mt-4">
     <!-- Welcome Message -->
     <br>
@@ -16,7 +18,7 @@
     <div class="jumbotron">
         <h1 class="display-4">Welcome, {{roleName[0][0]}} {{ firstName[0][0] }}!</h1>
         {% if roleName[0][0] != "SUPER ADMIN" %}
-        <p class="lead">Here are your pending evaluations. Please complete them at your earliest convenience.</p>
+        <p class="lead">Here are your achived evaluations. These are evaluations past the due date.</p>
         {% endif %}
     </div>
 
@@ -24,7 +26,7 @@
     {% if roleName[0][0] != "SUPER ADMIN" %}
    <div class="alert alert-info">
     <p>Filter evaluations by:</p>
-    <form method="POST" action="/dashboard" class="row g-3">
+    <form method="POST" action="/archives" class="row g-3">
         <div class="col-md-3">
             <label for="schoolYear" class="form-label">School Year</label>
             <select class="form-select" id="schoolYear" name="schoolYear">
@@ -244,4 +246,5 @@
     </script>
     {% endif %}
 </div>
+
 {% endblock %}

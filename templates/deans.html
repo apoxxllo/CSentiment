@@ -5,6 +5,7 @@
 {% block content %}
 <br>
 <div class="container mt-4">
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     {% for category, message in messages %}
@@ -12,14 +13,21 @@
     {% endfor %}
     {% endif %}
     {% endwith %}
+
+    <!-- Title and Search Box -->
     <div class="row mb-4">
-        <div class="col-md-12">
-            <h1 class="text-center">List of Deans</h1>
+        <div class="col-md-6">
+            <h1 class="text-left">List of Deans</h1>
+        </div>
+        <div class="col-md-6">
+            <input type="text" id="searchBox" class="form-control" placeholder="Search Department...">
         </div>
     </div>
-    <div class="row">
+
+    <!-- Department List -->
+    <div class="row" id="departmentList">
         {% for department in departments %}
-        <div class="col-md-12 mb-3">
+        <div class="col-md-12 mb-3 department-card" data-department-name="{{ department.name | lower }}">
             <div class="card">
                 <div class="card-header">
                     <h4>{{ department.name }}</h4>
@@ -141,8 +149,22 @@
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('[data-toggle="collapse"]').click(function() {
+    $(document).ready(function () {
+        // Filter functionality
+        $('#searchBox').on('input', function () {
+            const searchValue = $(this).val().toLowerCase();
+            $('.department-card').each(function () {
+                const departmentName = $(this).data('department-name');
+                if (departmentName.includes(searchValue)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        // Toggle collapse for add/change dean forms
+        $('[data-toggle="collapse"]').click(function () {
             var target = $(this).data('target');
             $(target).collapse('toggle');
         });
