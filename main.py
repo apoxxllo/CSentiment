@@ -305,7 +305,7 @@ def dashboard():
 
         if roleName[0][0] != "SUPER ADMIN":
             cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
-                        (session['school_id'], session['department_id']))
+                        (session['school_id'], 19))
             questionnairesets = cur.fetchall()
             if len(questionnairesets) == 0:
                 questionnairesets = [0, 0]
@@ -321,7 +321,7 @@ def dashboard():
                 questionnairesets = [0, 0]
             questionnairesets = tuple(questionnairesets)
 
-        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s and dateEnd >= CURDATE()"
+        sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
         cur.execute(sql, (questionnairesets, semester, school_year))
         evaluationsAll = cur.fetchall()
         evaluations = []
@@ -350,13 +350,13 @@ def dashboard():
 
         if roleId == 3:
             cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
-                        (session['school_id'], session['department_id']))
+                        (session['school_id'], 19))
             questionnairesets = cur.fetchall()
             if len(questionnairesets) == 0:
                 questionnairesets = (0, 0)
             print(type(questionnairesets))
             print(semester, school_year)
-            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s and dateEnd >= CURDATE()"
+            sql = "SELECT * FROM evaluationforms WHERE questionnaireset_id IN %s and semester_id = %s and schoolyear_id = %s"
             cur.execute(sql, (questionnairesets, semester, school_year))
             evaluationsAll = cur.fetchall()
             evaluations = []
@@ -388,7 +388,7 @@ def dashboard():
             # evaluations = evaluationsAll
         elif roleId == 2:
             cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
-                        (session['school_id'], session['department_id']))
+                        (session['school_id'], 19))
             questionnairesets = cur.fetchall()
             if len(questionnairesets) == 0:
                 questionnairesets = (0, 0)
@@ -1705,7 +1705,7 @@ def viewEvaluation(evaluationFormId, subject, respondents):
 
     cur = mysql.connection.cursor()
     cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
-                (session['school_id'], session['department_id']))
+                (session['school_id'], 19))
     questionnairesets = cur.fetchall()
     if len(questionnairesets) == 0:
         questionnairesets = [0, 0]
@@ -1866,9 +1866,11 @@ def evaluate(teacher, subject, evaluationFormId, category):  # summary
 
     print(G_TEACHER_ID)
 
+    # sync_sentiments()
+
     cur = mysql.connection.cursor()
     cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
-                (session['school_id'], session['department_id']))
+                (session['school_id'], 19))
     questionnairesets = cur.fetchall()
     if len(questionnairesets) == 0:
         questionnairesets = [0, 0]
@@ -1985,8 +1987,8 @@ def evaluate(teacher, subject, evaluationFormId, category):  # summary
             if subject == "all":
                 subjects = []
         else:
-            sql = "SELECT DISTINCT subjects.id, subjects.edpCode, subjects.title FROM subjects INNER JOIN users AS teachers ON subjects.teacherid = teachers.id WHERE teachers.id = %s"
-            val = (teacher,)
+            sql = ("SELECT DISTINCT subjects.id, subjects.edpCode, subjects.title FROM subjects INNER JOIN users AS teachers ON subjects.teacherid = teachers.id WHERE teachers.id = %s AND subjects.semester_id = %s AND subjects.schoolyear_id = %s")
+            val = (teacher, semesterId, schoolyearid)
             cur.execute(sql, val)
             subjects = cur.fetchall()
             print('subjects', subjects)
@@ -2023,7 +2025,7 @@ def evaluate(teacher, subject, evaluationFormId, category):  # summary
     # end for default queries
 
     # get sentiment values
-    comments = getSentimentValues(teacher, subject, evaluationFormId, category)
+    comments = getSentimentValues(teacher, subject, evaluationFormId, category, semesterId, schoolyearid)
 
     # get total number of respondents
     numofrespondents = getNumberOfRespondents(teacher, subject, evaluationFormId, category)
@@ -2477,6 +2479,50 @@ def viewQuestionnaires():
     return render_template('viewQuestionnaires.html', questionnaires=questionnaires)
 
 
+def sync_sentiments():
+    try:
+        cur = mysql.connection.cursor()
+
+        # Get all evaluation records where comment is not NULL, not empty, and not just whitespace
+        sql = """
+            SELECT e.id, e.comment, e.evaluationform_id
+            FROM evaluation e
+            LEFT JOIN csentiment c ON e.id = c.evaluationId
+            WHERE e.comment IS NOT NULL AND TRIM(e.comment) <> '' AND c.evaluationId IS NULL;
+        """
+        cur.execute(sql)
+        evaluations = cur.fetchall()
+
+        if not evaluations:
+            print("No new comments to process.")
+            cur.close()
+            return
+
+        for evaluation in evaluations:
+            eval_id, comment, evaluationFormId = evaluation
+
+            # Get sentiment values
+            sentiment_result = getsentiment(comment).split(" ")
+            sen_val = sentiment_result[0]
+            pos_val = sentiment_result[1]
+            neu_val = sentiment_result[2]
+            neg_val = sentiment_result[3]
+            score_val = sentiment_result[4] if sen_val != 'neutral' else None
+
+            # Insert into csentiment
+            sql_insert = """
+                INSERT INTO csentiment (evaluationId, evaluationForm_id, comment, positive_value, neutral_value, negative_value, sentiment_classification, score)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+            """
+            cur.execute(sql_insert, (eval_id, evaluationFormId, comment, pos_val, neu_val, neg_val, sen_val, score_val))
+
+        mysql.connection.commit()
+        cur.close()
+        print("Sentiments synced successfully.")
+    except Exception as exp:
+        print(f"Error syncing sentiments: {exp}")
+
+
 @app.route('/viewQuestionnaire/<questionnairesetId>', methods=["GET"])
 def viewQuestionnaire(questionnairesetId):
     if 'userId' not in session:
@@ -2686,7 +2732,7 @@ def generateReport(sec1, sec2, sec3, sec4, sec5, comment, ratingPerc, commentPer
             flash('Unable to generate report: You must upload an e-signature (in profile)', 'danger')
             return redirect(url_for('dashboard'))
         cur.execute("SELECT id FROM questionnaireset WHERE school_id = %s and department_id = %s",
-                    (session['school_id'], session['department_id']))
+                    (session['school_id'], 19,))
         questionnairesets = cur.fetchall()
         if len(questionnairesets) == 0:
             questionnairesets = [0, 0]
@@ -3216,7 +3262,13 @@ def getNumberOfRespondents(teacher, subject, evaluationFormId, category):
         return result[0][0]
 
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
-        cur.execute("SELECT count(*) from evaluation WHERE evaluationform_id = %s", (evaluationFormId,))
+        cur.execute("""
+            SELECT COUNT(*) 
+            FROM evaluation 
+            INNER JOIN users ON evaluation.idTeacher = users.id 
+            WHERE evaluation.evaluationform_id = %s 
+            AND users.department_id = %s
+        """, (evaluationFormId, session["department_id"],))
         result = cur.fetchall()
         return result[0][0]
     # if not default
@@ -3469,7 +3521,7 @@ def getRatingValuesFaculty(teacher, subject, evaluationFormId, category, respond
 
 
 # get comment,pos,neg,neu
-def getSentimentValues(teacher, subject, evaluationFormId, category):
+def getSentimentValues(teacher, subject, evaluationFormId, category, semesterId, schoolYearId):
     cur = mysql.connection.cursor()
     # if default
     # if no teacher is selected, and no subject select (no filter)
@@ -3490,41 +3542,73 @@ def getSentimentValues(teacher, subject, evaluationFormId, category):
         cur.execute(sql, (evaluationFormId, valid_teacher_ids))
         return cur.fetchall()
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
-        sql = "SELECT evaluation.comment,"
-        sql += "csentiment.positive_value,"
-        sql += "csentiment.neutral_value,"
-        sql += "csentiment.negative_value,"
-        sql += "csentiment.sentiment_classification,"
-        sql += "csentiment.score "
-        sql += "from evaluation INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
-        sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.evaluationform_id = %s"
-        cur.execute(sql, (evaluationFormId,))
+        print("hatags")
+        sql = """
+                        SELECT evaluation.comment,
+                   csentiment.positive_value,
+                   csentiment.neutral_value,
+                   csentiment.negative_value,
+                   csentiment.sentiment_classification,
+                   csentiment.score
+            FROM evaluation
+            INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId
+            INNER JOIN users ON evaluation.idteacher = users.id
+            INNER JOIN subjects ON evaluation.subject_id = subjects.id
+            WHERE evaluation.comment IS NOT NULL
+                  AND evaluation.comment <> ''
+                  AND evaluation.evaluationform_id = %s
+                  AND users.department_id = %s
+                  AND subjects.semester_id = %s
+                  AND subjects.schoolyear_id = %s
+            LIMIT 20
+
+        """
+
+        cur.execute(sql, (evaluationFormId, session["department_id"], semesterId, schoolYearId,))
         return cur.fetchall()
     # if not default
     else:
         # if a teacher is selected, but no subject is selected (teacher + all subjects)
         if ((teacher != "0" and teacher != "all") and (subject == "0" or subject == "all")):
-            sql = "SELECT evaluation.comment,"
-            sql += "csentiment.positive_value,"
-            sql += "csentiment.neutral_value,"
-            sql += "csentiment.negative_value,"
-            sql += "csentiment.sentiment_classification,"
+            sql = "SELECT evaluation.comment, "
+            sql += "csentiment.positive_value, "
+            sql += "csentiment.neutral_value, "
+            sql += "csentiment.negative_value, "
+            sql += "csentiment.sentiment_classification, "
             sql += "csentiment.score "
-            sql += "from evaluation INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
-            sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.idteacher = %s and evaluation.evaluationform_id = %s"
-            val = (teacher, evaluationFormId,)
+            sql += "FROM evaluation "
+            sql += "INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
+            sql += "INNER JOIN subjects ON evaluation.subject_id = subjects.id "
+            sql += "WHERE evaluation.comment IS NOT NULL "
+            sql += "AND evaluation.comment <> '' "
+            sql += "AND evaluation.idteacher = %s "
+            sql += "AND evaluation.evaluationform_id = %s "
+            sql += "AND subjects.semester_id = %s "
+            sql += "AND subjects.schoolyear_id = %s"
+
+            val = (teacher, evaluationFormId, semesterId, schoolYearId,)
+
         # if a teacher is selected, and a subject is selected (teacher + subject)
         elif ((teacher != "0" and teacher != "all") and (subject != "0" or subject != "all")):
-            sql = "SELECT evaluation.comment,"
-            sql += "csentiment.positive_value,"
-            sql += "csentiment.neutral_value,"
-            sql += "csentiment.negative_value,"
-            sql += "csentiment.sentiment_classification,"
+            sql = "SELECT evaluation.comment, "
+            sql += "csentiment.positive_value, "
+            sql += "csentiment.neutral_value, "
+            sql += "csentiment.negative_value, "
+            sql += "csentiment.sentiment_classification, "
             sql += "csentiment.score "
-            sql += "from evaluation INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
-            sql += "where evaluation.comment is not null and evaluation.comment <> '' and evaluation.idteacher = %s and evaluation.subject_id = %s and evaluation.evaluationform_id = %s"
-            # sql = "SELECT comment,pos,neu,neg,sentiment,score from evaluation where comment is not null and comment <> '' and idteacher = %s and edpCode = %s"
-            val = (teacher, subject, evaluationFormId,)
+            sql += "FROM evaluation "
+            sql += "INNER JOIN csentiment ON evaluation.id = csentiment.evaluationId "
+            sql += "INNER JOIN subjects ON evaluation.subject_id = subjects.id "
+            sql += "WHERE evaluation.comment IS NOT NULL "
+            sql += "AND evaluation.comment <> '' "
+            sql += "AND evaluation.idteacher = %s "
+            sql += "AND evaluation.subject_id = %s "
+            sql += "AND evaluation.evaluationform_id = %s "
+            sql += "AND subjects.semester_id = %s "
+            sql += "AND subjects.schoolyear_id = %s"
+
+            val = (teacher, subject, evaluationFormId, semesterId, schoolYearId,)
+
         # else (if there is no teacher selected and a subject is selected)
         else:
             sql = "SELECT evaluation.comment,"
@@ -3559,9 +3643,22 @@ def getRatingValues(teacher, subject, evaluationFormId, category):
         # return result[0][0]
     # if no teacher is selected, and no subject select (no filter)
     if ((teacher == "all" or teacher == "0") and (subject == "0" or subject == "all")):
-        cur.execute(
-            "select section1, section2, section3, section4, section5, (select count(id) from evaluation WHERE evaluationform_id = %s) as totalnum from evaluation WHERE evaluationForm_id = %s",
-            (evaluationFormId, evaluationFormId,))
+        cur.execute("""SELECT evaluation.section1, 
+                   evaluation.section2, 
+                   evaluation.section3, 
+                   evaluation.section4, 
+                   evaluation.section5, 
+                   (SELECT COUNT(evaluation.id) 
+                    FROM evaluation 
+                    INNER JOIN users ON evaluation.idteacher = users.id 
+                    WHERE evaluation.evaluationform_id = %s 
+                      AND users.department_id = %s) AS totalnum
+                        FROM evaluation
+                        INNER JOIN users ON evaluation.idteacher = users.id
+                        WHERE evaluation.evaluationform_id = %s
+                        AND users.department_id = %s
+                        """,
+            (evaluationFormId, session["department_id"], evaluationFormId, session["department_id"],))
         return cur.fetchall()
     # if not default
     else:
